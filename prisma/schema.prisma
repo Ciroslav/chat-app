@@ -12,12 +12,12 @@ datasource db {
 
 model User {
   id Int @id @default(autoincrement())
-  uuid String
+  uuid String @unique
   createdAt DateTime @default(now())
   updatedAd DateTime @updatedAt
 
-  username String
-  email String
+  username String @unique
+  email String @unique
   passwordHash String
   rtHash String?
 
