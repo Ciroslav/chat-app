@@ -14,7 +14,7 @@ model User {
   id Int @id @default(autoincrement())
   uuid String @unique
   createdAt DateTime @default(now())
-  updatedAd DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
   username String @unique
   email String @unique

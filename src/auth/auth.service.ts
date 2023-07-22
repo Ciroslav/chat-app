@@ -1,7 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { SignupDto } from './dto';
-import { hash } from 'bcrypt';
+import { LoginDto, SignupDto } from './dto';
+import { hash, compare } from 'bcrypt';
 import { v4 as uuid } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { Tokens } from './types';
@@ -34,14 +38,51 @@ export class AuthService {
       throw error;
     }
   }
-  login() {}
-  logout() {}
+  async login(loginDto: LoginDto): Promise<Tokens> {
+    let user = null;
+    if (loginDto.email) {
+      user = await this.prisma.user.findUnique({
+        where: {
+          email: loginDto.email,
+        },
+      });
+      console.log('email', user);
+    } else {
+      user = await this.prisma.user.findUnique({
+        where: {
+          username: loginDto.username,
+        },
+      });
+      console.log('username', user);
+    }
+    if (!user) throw new ForbiddenException('Incorrect credentials.');
+    const passwordMatches = await compare(loginDto.password, user.passwordHash);
+    if (!passwordMatches)
+      throw new ForbiddenException('Incorrect credentials.');
+    const tokens = await this.getTokens(user.uuid, user.email);
+    await this.updateRtHash(user.uuid, tokens.refresh_token);
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.prisma.user.updateMany({
+      where: {
+        uuid: userId,
+        rtHash: {
+          not: null,
+        },
+      },
+      data: {
+        rtHash: null,
+      },
+    });
+  }
   refreshToken() {}
 
   hashData(data: string) {
     return hash(data, 10);
   }
-
+  //TODO: refresh token is not issued again if it is still valid
   async getTokens(userId: string, email: string): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(
