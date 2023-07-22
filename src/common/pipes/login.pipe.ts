@@ -1,9 +1,9 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { LoginDto } from '../dto/login.dto';
+import { LoginDto } from '../../auth/dto/login.dto';
 
 @Injectable()
 export class LoginDtoValidatorPipe implements PipeTransform {
-  transform(value: any) {
+  transform(value: LoginDto) {
     const { email, username, password } = value as LoginDto;
 
     if (!email && !username) {

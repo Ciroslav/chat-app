@@ -26,7 +26,11 @@ export class AuthService {
         },
       });
 
-      const tokens = await this.getTokens(newUser.uuid, newUser.email);
+      const tokens = await this.getTokens(
+        newUser.uuid,
+        newUser.email,
+        newUser.username,
+      );
       await this.updateRtHash(newUser.uuid, tokens.refresh_token);
       return tokens;
     } catch (error) {
@@ -59,15 +63,16 @@ export class AuthService {
     const passwordMatches = await compare(loginDto.password, user.passwordHash);
     if (!passwordMatches)
       throw new ForbiddenException('Incorrect credentials.');
-    const tokens = await this.getTokens(user.uuid, user.email);
+    const tokens = await this.getTokens(user.uuid, user.email, user.username);
     await this.updateRtHash(user.uuid, tokens.refresh_token);
     return tokens;
   }
 
-  async logout(userId: string) {
+  async logout(uuid: string) {
+    console.log(uuid);
     await this.prisma.user.updateMany({
       where: {
-        uuid: userId,
+        uuid: uuid,
         rtHash: {
           not: null,
         },
@@ -77,24 +82,48 @@ export class AuthService {
       },
     });
   }
-  refreshToken() {}
+  async refreshToken(uuid: string, refreshToken: string) {
+    console.log(uuid);
+    console.log(refreshToken);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        uuid: uuid,
+      },
+    });
+    console.log('service user', user);
+    if (!user) throw new ForbiddenException();
+    if (!user.rtHash) throw new ForbiddenException(); // user logged out
+    const refreshTokenValid = await compare(refreshToken, user.rtHash);
+    console.log('refreshToken valid', refreshTokenValid);
+    if (!refreshTokenValid) throw new ForbiddenException();
+    const tokens = await this.getTokens(user.uuid, user.email, user.username);
+    console.log('service', tokens);
+    await this.updateRtHash(user.uuid, tokens.refresh_token);
+    return tokens;
+  }
 
   hashData(data: string) {
     return hash(data, 10);
   }
   //TODO: refresh token is not issued again if it is still valid
-  async getTokens(userId: string, email: string): Promise<Tokens> {
+  async getTokens(
+    userId: string,
+    email: string,
+    username: string,
+  ): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(
         {
-          sub: userId,
+          uuid: userId,
+          username: username,
           email,
         },
         { secret: 'at-secret', expiresIn: 60 * 15 },
       ),
       this.jwtService.signAsync(
         {
-          sub: userId,
+          uuid: userId,
+          username: username,
           email,
         },
         { secret: 'rt-secret', expiresIn: 60 * 60 * 24 * 14 },
