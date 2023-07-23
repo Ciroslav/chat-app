@@ -14,6 +14,7 @@ import { Tokens } from './types';
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
 
+  //TODO: write different logic that will not increase seq in case of failed requests
   async signup(signupDto: SignupDto) {
     const hash = await this.hashData(signupDto.password);
     try {
@@ -36,7 +37,7 @@ export class AuthService {
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException(
-          `User with given '${error.meta.target[0]}' already exists.`,
+          `User with given '${error.meta.target[0]}' and password 'Hehexd123' already exists.`,
         );
       }
       throw error;
@@ -50,14 +51,12 @@ export class AuthService {
           email: loginDto.email,
         },
       });
-      console.log('email', user);
     } else {
       user = await this.prisma.user.findUnique({
         where: {
           username: loginDto.username,
         },
       });
-      console.log('username', user);
     }
     if (!user) throw new ForbiddenException('Incorrect credentials.');
     const passwordMatches = await compare(loginDto.password, user.passwordHash);
@@ -69,7 +68,6 @@ export class AuthService {
   }
 
   async logout(uuid: string) {
-    console.log(uuid);
     await this.prisma.user.updateMany({
       where: {
         uuid: uuid,
@@ -83,21 +81,17 @@ export class AuthService {
     });
   }
   async refreshToken(uuid: string, refreshToken: string) {
-    console.log(uuid);
-    console.log(refreshToken);
     const user = await this.prisma.user.findUnique({
       where: {
         uuid: uuid,
       },
     });
-    console.log('service user', user);
     if (!user) throw new ForbiddenException();
     if (!user.rtHash) throw new ForbiddenException(); // user logged out
     const refreshTokenValid = await compare(refreshToken, user.rtHash);
     console.log('refreshToken valid', refreshTokenValid);
     if (!refreshTokenValid) throw new ForbiddenException();
     const tokens = await this.getTokens(user.uuid, user.email, user.username);
-    console.log('service', tokens);
     await this.updateRtHash(user.uuid, tokens.refresh_token);
     return tokens;
   }

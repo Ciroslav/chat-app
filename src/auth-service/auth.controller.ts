@@ -4,6 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Get,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -38,7 +39,7 @@ export class AuthController {
   }
 
   @UseGuards(RefreshGuard)
-  @Post('/refresh')
+  @Get('/refresh')
   @HttpCode(HttpStatus.OK)
   refreshToken(
     @GetCurrentUserData('uuid') uuid: string,
