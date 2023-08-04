@@ -10,20 +10,27 @@ import {
 import { AuthService } from './auth.service';
 import { SignupDto, LoginDto } from './dto';
 import { Tokens } from './types';
-import { LoginDtoValidatorPipe } from '../common/pipes/login.pipe';
+import { LoginDtoValidatorPipe } from '../../common/pipes/login.pipe';
 import { AccessGuard, RefreshGuard } from 'src/common/guards';
 import { GetCurrentUserData } from 'src/common/decorators';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { SwaggerTags } from 'src/swagger';
 
+@ApiTags(SwaggerTags.Authorization)
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('/signup')
+  @ApiOperation({ summary: 'Sign up' })
+  @ApiBody({ type: SignupDto })
   signup(@Body() signupDto: SignupDto): Promise<Tokens> {
     return this.authService.signup(signupDto);
   }
 
   @Post('/login')
+  @ApiOperation({ summary: 'Login' })
+  @ApiBody({ type: LoginDto })
   @HttpCode(HttpStatus.OK)
   login(
     @Body(new LoginDtoValidatorPipe()) loginDto: LoginDto,
@@ -32,6 +39,7 @@ export class AuthController {
   }
 
   @UseGuards(AccessGuard)
+  @ApiOperation({ summary: 'Invalidates refresh token' })
   @Post('/logout')
   @HttpCode(HttpStatus.OK)
   logout(@GetCurrentUserData('uuid') userId: string) {
@@ -40,6 +48,8 @@ export class AuthController {
 
   @UseGuards(RefreshGuard)
   @Get('/refresh')
+  @UseGuards(AccessGuard)
+  @ApiOperation({ summary: 'Issues new Refresh/Access token pair' })
   @HttpCode(HttpStatus.OK)
   refreshToken(
     @GetCurrentUserData('uuid') uuid: string,
