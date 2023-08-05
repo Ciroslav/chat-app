@@ -6,7 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto, SignupDto } from './dto';
 import { hash, compare } from 'bcrypt';
-import { v4 as uuid } from 'uuid';
+import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { Tokens } from './types';
 
@@ -23,21 +23,22 @@ export class AuthService {
           email: signupDto.email,
           username: signupDto.username,
           passwordHash: hash,
-          uuid: uuid(),
+          uuid: uuid4(),
         },
       });
+      return newUser;
 
-      const tokens = await this.getTokens(
-        newUser.uuid,
-        newUser.email,
-        newUser.username,
-      );
-      await this.updateRtHash(newUser.uuid, tokens.refresh_token);
-      return tokens;
+      // const tokens = await this.getTokens(
+      //   newUser.uuid,
+      //   newUser.email,
+      //   newUser.username,
+      // );
+      // await this.updateRtHash(newUser.uuid, tokens.refresh_token);
+      // return tokens;
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException(
-          `User with given '${error.meta.target[0]}' and password 'Hehexd123' already exists.`,
+          `User with given '${error.meta.target[0]}' already exists.`,
         );
       }
       throw error;
@@ -63,12 +64,14 @@ export class AuthService {
     if (!passwordMatches)
       throw new ForbiddenException('Incorrect credentials.');
     const tokens = await this.getTokens(user.uuid, user.email, user.username);
-    await this.updateRtHash(user.uuid, tokens.refresh_token);
+    //change logic
+    await this.saveSession(user.uuid, tokens.refresh_token);
     return tokens;
   }
 
   async logout(uuid: string) {
-    await this.prisma.user.updateMany({
+    console.log(uuid);
+    await this.prisma.session.updateMany({
       where: {
         uuid: uuid,
         rtHash: {
@@ -81,18 +84,30 @@ export class AuthService {
     });
   }
   async refreshToken(uuid: string, refreshToken: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        uuid: uuid,
-      },
+    const userWithSession = await this.prisma.user.findUnique({
+      where: { uuid },
+      include: { sessions: { select: { rtHash: true } } },
     });
-    if (!user) throw new ForbiddenException();
-    if (!user.rtHash) throw new ForbiddenException(); // user logged out
+    console.log('joined query', userWithSession);
+
+    if (!userWithSession) {
+      throw new ForbiddenException(); // User or session not found
+    }
+
+    const user = userWithSession[0];
+
+    if (!user.rtHash) {
+      throw new ForbiddenException(); // User logged out
+    }
+
     const refreshTokenValid = await compare(refreshToken, user.rtHash);
-    console.log('refreshToken valid', refreshTokenValid);
-    if (!refreshTokenValid) throw new ForbiddenException();
+
+    if (!refreshTokenValid) {
+      throw new ForbiddenException(); // Invalid refresh token
+    }
+
     const tokens = await this.getTokens(user.uuid, user.email, user.username);
-    await this.updateRtHash(user.uuid, tokens.refresh_token);
+    await this.saveSession(userWithSession[0].uuid, tokens.refresh_token);
     return tokens;
   }
 
@@ -129,15 +144,28 @@ export class AuthService {
     };
   }
 
-  async updateRtHash(uuid: string, refreshToken: string) {
+  async saveSession(uuid: string, refreshToken: string) {
     const hash = await this.hashData(refreshToken);
-    await this.prisma.user.update({
-      where: {
-        uuid: uuid,
-      },
+    await this.prisma.session.create({
       data: {
+        uuid: uuid4(),
         rtHash: hash,
+        userId: uuid,
       },
     });
   }
+  // async extendSession(uuid: string, refreshToken: string) {
+  //   const hash = await this.hashData(refreshToken);
+  //   await this.prisma.session.update({
+  //     where: {
+  //       userId: uuid,
+  //       rtHash: hash,
+  //     },
+  //     data: {
+  //       uuid: uuid4(),
+  //       rtHash: hash,
+  //       userId: uuid,
+  //     },
+  //   });
+  // }
 }

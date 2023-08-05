@@ -24,7 +24,8 @@ export class AuthController {
   @Post('/signup')
   @ApiOperation({ summary: 'Sign up' })
   @ApiBody({ type: SignupDto })
-  signup(@Body() signupDto: SignupDto): Promise<Tokens> {
+  //TODO: CHANGE PROMISE
+  signup(@Body() signupDto: SignupDto): Promise<any> {
     return this.authService.signup(signupDto);
   }
 
@@ -48,7 +49,6 @@ export class AuthController {
 
   @UseGuards(RefreshGuard)
   @Get('/refresh')
-  @UseGuards(AccessGuard)
   @ApiOperation({ summary: 'Issues new Refresh/Access token pair' })
   @HttpCode(HttpStatus.OK)
   refreshToken(

@@ -11,6 +11,7 @@ type userSessionMetadata =
 export const GetCurrentUserData = createParamDecorator(
   (data: userSessionMetadata | undefined, context: ExecutionContext) => {
     const request = context.switchToHttp().getRequest();
+    console.log(request);
     if (!data) return request.user;
     return request.user[data];
   },

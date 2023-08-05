@@ -11,15 +11,33 @@ datasource db {
 }
 
 model User {
-  id Int @id @default(autoincrement())
+  id   Int    @id @default(autoincrement())
   uuid String @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  username String @unique
-  email String @unique
+  username     String    @unique
+  email        String    @unique
   passwordHash String
-  rtHash String?
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime?
+  updatedAt    DateTime  @updatedAt
+  status       String    @default("ACTIVE")
+  roles        String[]  @default(["USER"])
+
+  sessions Session[]
 
   @@map("users")
+}
+
+model Session {
+  id             Int       @id @default(autoincrement())
+  uuid           String    @unique
+  createdAt      DateTime  @default(now())
+  lastAccessedAt DateTime?
+  expiresAt      DateTime?
+  rtHash         String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [uuid])
+
+  @@map("sessions")
 }
