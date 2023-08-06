@@ -1,5 +1,5 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
-import { LoginDto } from '../../services/auth-service/dto/login.dto';
+import { LoginDto } from '../../services/auth/dto/login.dto';
 
 @Injectable()
 export class LoginDtoValidatorPipe implements PipeTransform {

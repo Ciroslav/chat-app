@@ -16,12 +16,15 @@ model User {
 
   username     String    @unique
   email        String    @unique
+  country      String?
+  address      String?
+  phoneNumber  String?
   passwordHash String
   createdAt    DateTime  @default(now())
   lastActiveAt DateTime?
   updatedAt    DateTime  @updatedAt
   status       String    @default("ACTIVE")
-  roles        String[]  @default(["USER"])
+  role         String    @default("USER")
 
   sessions Session[]
 
@@ -33,11 +36,14 @@ model Session {
   uuid           String    @unique
   createdAt      DateTime  @default(now())
   lastAccessedAt DateTime?
-  expiresAt      DateTime?
+  issuedAt       DateTime
+  expiresAt      DateTime
+  loginIpAdress  String?
   rtHash         String?
+  role           String
 
   userId String
-  user   User   @relation(fields: [userId], references: [uuid])
+  user   User   @relation(fields: [userId], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
 }

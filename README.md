@@ -13,7 +13,9 @@ $ sudo apt install docker-compose
 $ sudo lsof -i :5432
 $ sudo kill <PID>
 # build DB for local development
-$ sudo docker-compose up
+$ npm run build:db
+$ npm run restart:db
+$ npm run teardown:db
 ```
 
 ## Running the app
