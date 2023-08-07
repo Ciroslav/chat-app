@@ -7,6 +7,11 @@ import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, Tokens } from './types';
 
+// 15 minutes Access Token lifespan
+const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
+// 2 weeks Refresh Token lifespan
+const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
+
 @Injectable()
 export class AuthService {
   constructor(private prisma: PrismaService, private jwtService: JwtService) {}
@@ -26,6 +31,7 @@ export class AuthService {
         },
       });
     }
+    console.log('USER DATA', user);
     if (!user) throw new ForbiddenException("User doesn't exist.");
     const passwordMatches = await compare(loginDto.password, user.passwordHash);
     if (!passwordMatches)
@@ -33,7 +39,12 @@ export class AuthService {
     if (user.status !== 'ACTIVE') {
       throw new ForbiddenException('Account expired or disabled');
     }
-    const tokens = await this.issueTokens(user.uuid, user.email, user.username);
+    const tokens = await this.issueTokens(
+      user.uuid,
+      user.email,
+      user.username,
+      user.role,
+    );
 
     await this.createSession(
       user.uuid,
@@ -164,6 +175,7 @@ export class AuthService {
       userId,
       session.user.email,
       session.user.username,
+      session.user.role,
     );
 
     return {
@@ -177,6 +189,7 @@ export class AuthService {
     userId: string,
     email: string,
     username: string,
+    role: string,
   ): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(
@@ -184,16 +197,18 @@ export class AuthService {
           uuid: userId,
           username: username,
           email,
+          role,
         },
-        { secret: 'at-secret', expiresIn: 60 * 15 },
+        { secret: 'at-secret', expiresIn: ACCESS_TOKEN_EXPIRATION_TIME },
       ),
       this.jwtService.signAsync(
         {
           uuid: userId,
           username: username,
           email,
+          role,
         },
-        { secret: 'rt-secret', expiresIn: 60 * 60 * 24 * 14 },
+        { secret: 'rt-secret', expiresIn: REFRESH_TOKEN_EXPIRATION_TIME },
       ),
     ]);
     return {

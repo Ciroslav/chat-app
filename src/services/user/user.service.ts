@@ -3,6 +3,8 @@ import {
   ConflictException,
   InternalServerErrorException,
   NotFoundException,
+  NotImplementedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -49,7 +51,7 @@ export class UserService {
           `User with given ${error.meta.target[0]} already exists.`,
         );
       }
-      throw InternalServerErrorException;
+      throw new InternalServerErrorException();
     }
   }
   async update(uuid: string, updateUserDto: UpdateUserDTO) {
@@ -86,7 +88,10 @@ export class UserService {
           `User with given ${error.meta.target[0]} already exists.`,
         );
       }
-      throw InternalServerErrorException;
+      if (error.code === 'P2025') {
+        throw new ForbiddenException();
+      }
+      console.log(error);
     }
   }
 
@@ -109,11 +114,12 @@ export class UserService {
     });
   }
   findAll() {
-    return `This action returns all userService`;
+    throw new NotImplementedException();
   }
 
   findOne(id: string) {
-    return `This action returns a #${id} userService`;
+    console.log(id);
+    throw new NotImplementedException();
   }
 
   /* HELPER FUNCTIONS 
