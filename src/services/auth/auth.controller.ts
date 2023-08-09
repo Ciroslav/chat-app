@@ -7,6 +7,7 @@ import {
   Get,
   UseGuards,
   Req,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto';
@@ -14,14 +15,16 @@ import { Tokens } from './types';
 import { LoginDtoValidatorPipe } from '../../common/pipes/login.pipe';
 import { RefreshGuard } from 'src/common/guards';
 import { GetCurrentUserData } from 'src/common/decorators';
-import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
 import { Request } from 'express';
+import { AuthLoggingInterceptor } from 'src/common/interceptors/auth-logging.interceptor';
 
 @ApiTags(SwaggerTags.Authorization)
 @Controller('auth')
+@ApiBearerAuth()
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
   @Post('/login')
   @ApiOperation({ summary: 'Login' })
@@ -35,8 +38,11 @@ export class AuthController {
     return this.authService.login(loginDto, loginIp);
   }
 
+  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
-  @ApiOperation({ summary: 'Invalidates given refresh token' })
+  @ApiOperation({
+    summary: 'Invalidates given refresh token - Use refresh token',
+  })
   @Post('/logout')
   @HttpCode(HttpStatus.OK)
   logout(
@@ -48,8 +54,11 @@ export class AuthController {
     return this.authService.logoutOne(userId, refreshToken);
   }
 
+  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
-  @ApiOperation({ summary: 'Invalidates all refresh tokens for user' })
+  @ApiOperation({
+    summary: 'Invalidates all refresh tokens for user - Use refresh token',
+  })
   @Post('/logout-all')
   @HttpCode(HttpStatus.OK)
   logoutAll(
@@ -61,9 +70,10 @@ export class AuthController {
     return this.authService.logoutAll(userId, refreshToken);
   }
 
+  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
   @Get('/refresh')
-  @ApiOperation({ summary: 'Issues new Access token' })
+  @ApiOperation({ summary: 'Issues new Access token- Use refresh token' })
   @HttpCode(HttpStatus.OK)
   refreshToken(
     @GetCurrentUserData('uuid') uuid: string,

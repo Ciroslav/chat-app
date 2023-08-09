@@ -14,7 +14,10 @@ const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async login(loginDto: LoginDto, loginIp: string): Promise<Tokens> {
     let user = null;
@@ -32,7 +35,7 @@ export class AuthService {
       });
     }
     console.log('USER DATA', user);
-    if (!user) throw new ForbiddenException("User doesn't exist.");
+    if (!user) throw new ForbiddenException('Incorrect credentials.');
     const passwordMatches = await compare(loginDto.password, user.passwordHash);
     if (!passwordMatches)
       throw new ForbiddenException('Incorrect credentials.');

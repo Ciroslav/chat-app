@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { createHash } from 'crypto';
@@ -16,12 +15,12 @@ import { v4 as uuid4 } from 'uuid';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async createUser(signupDto: CreateUserDTO): Promise<Partial<User>> {
     const hash = await this.hashPassword(signupDto.password);
     try {
-      const newUser = await this.prisma.user.create({
+      return await this.prisma.user.create({
         data: {
           uuid: uuid4(),
           email: signupDto.email,
@@ -44,7 +43,6 @@ export class UserService {
           role: true,
         },
       });
-      return newUser;
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException(

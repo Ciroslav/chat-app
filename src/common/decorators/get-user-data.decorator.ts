@@ -4,6 +4,7 @@ type userSessionMetadata =
   | 'uuid'
   | 'email'
   | 'username'
+  | 'role'
   | 'iat'
   | 'exp'
   | 'refreshToken';
