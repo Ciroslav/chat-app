@@ -10,6 +10,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export class UpdateUserDTO {
   @ApiProperty()
   @IsNotEmpty()
+  @IsOptional()
   @IsEmail()
   email: string;
   @ApiProperty()

@@ -7,7 +7,6 @@ import {
   Get,
   UseGuards,
   Req,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto';
@@ -18,7 +17,6 @@ import { GetCurrentUserData } from 'src/common/decorators';
 import { ApiTags, ApiOperation, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
 import { Request } from 'express';
-import { AuthLoggingInterceptor } from 'src/common/interceptors/auth-logging.interceptor';
 
 @ApiTags(SwaggerTags.Authorization)
 @Controller('auth')
@@ -38,7 +36,6 @@ export class AuthController {
     return this.authService.login(loginDto, loginIp);
   }
 
-  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
   @ApiOperation({
     summary: 'Invalidates given refresh token - Use refresh token',
@@ -47,14 +44,11 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logout(
     @GetCurrentUserData('uuid') userId: string,
-    @GetCurrentUserData('refreshToken') refreshToken: string,
+    @GetCurrentUserData('token') refreshToken: string,
   ) {
-    console.log('CONTROLLER UUID', userId),
-      console.log('Controller refresh token', refreshToken);
     return this.authService.logoutOne(userId, refreshToken);
   }
 
-  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
   @ApiOperation({
     summary: 'Invalidates all refresh tokens for user - Use refresh token',
@@ -63,21 +57,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   logoutAll(
     @GetCurrentUserData('uuid') userId: string,
-    @GetCurrentUserData('refreshToken') refreshToken: string,
+    @GetCurrentUserData('token') refreshToken: string,
   ) {
-    console.log('CONTROLLER UUID', userId),
-      console.log('Controller refresh token', refreshToken);
     return this.authService.logoutAll(userId, refreshToken);
   }
 
-  @UseInterceptors(AuthLoggingInterceptor)
   @UseGuards(RefreshGuard)
   @Get('/refresh')
   @ApiOperation({ summary: 'Issues new Access token- Use refresh token' })
   @HttpCode(HttpStatus.OK)
   refreshToken(
     @GetCurrentUserData('uuid') uuid: string,
-    @GetCurrentUserData('refreshToken') refreshToken: string,
+    @GetCurrentUserData('token') refreshToken: string,
   ) {
     return this.authService.refreshAccessToken(uuid, refreshToken);
   }
