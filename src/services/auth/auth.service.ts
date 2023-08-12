@@ -1,23 +1,29 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto';
-import { hash, compare } from 'bcrypt';
+import { compare } from 'bcrypt';
 import { createHash } from 'crypto';
 import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, Tokens } from './types';
+import { ServiceLogger } from 'src/common/logger';
+import { ServiceName } from 'src/common/decorators';
 
 // 15 minutes Access Token lifespan
 const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
 // 2 weeks Refresh Token lifespan
 const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
 
+@ServiceName('Auth Service')
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly logger: ServiceLogger,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.logger = new ServiceLogger('Auth Service');
+  }
 
   async login(loginDto: LoginDto, loginIp: string): Promise<Tokens> {
     let user = null;
@@ -34,13 +40,16 @@ export class AuthService {
         },
       });
     }
-    console.log('USER DATA', user);
     if (!user) throw new ForbiddenException('Incorrect credentials.');
     const passwordMatches = await compare(loginDto.password, user.passwordHash);
-    if (!passwordMatches)
+    if (!passwordMatches) {
+      this.logger.log(
+        `Failed login attempt for user with uuid: '${user.uuid}.'`,
+      );
       throw new ForbiddenException('Incorrect credentials.');
+    }
     if (user.status !== 'ACTIVE') {
-      throw new ForbiddenException('Account expired or disabled');
+      throw new ForbiddenException('Account expired or disabled.');
     }
     const tokens = await this.issueTokens(
       user.uuid,
@@ -55,6 +64,7 @@ export class AuthService {
       loginIp,
       user.role,
     );
+    this.logger.log(`User with uuid '${user.uuid}' successfully logged in.`);
     return tokens;
   }
 
@@ -101,6 +111,7 @@ export class AuthService {
         rtHash: null,
       },
     });
+    this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
     return { message: `Number of sessions invalidated: ${data.count}` };
   }
   async createSession(
@@ -224,10 +235,6 @@ export class AuthService {
 */
   private convertTimestampToDate(timestamp: number) {
     return new Date(timestamp * 1000).toISOString();
-  }
-
-  private async hashPassword(data: string) {
-    return hash(data, 10);
   }
 
   private async hashToken(data: string): Promise<string> {

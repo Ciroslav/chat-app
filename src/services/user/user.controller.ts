@@ -7,7 +7,6 @@ import {
   Delete,
   Put,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
@@ -16,7 +15,8 @@ import { SwaggerTags } from 'src/swagger';
 import { ApiBody, ApiOperation } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { AccessGuard } from 'src/common/guards';
-import { AuthLoggingInterceptor } from 'src/common/interceptors/auth-logging.interceptor';
+import { UuidMatchGuard } from 'src/common/guards/uuid-match.guard';
+import { GetCurrentUserData } from 'src/common/decorators';
 
 @ApiTags(SwaggerTags.Users)
 @Controller('user')
@@ -31,20 +31,26 @@ export class UserServiceController {
     return this.userService.createUser(createUserDto);
   }
 
-  @UseInterceptors(AuthLoggingInterceptor)
+  @UseGuards(UuidMatchGuard)
   @UseGuards(AccessGuard)
-  @Put(':id')
+  @Put(':uuid')
   @ApiOperation({ summary: 'Update user' })
-  update(@Param('id') uuid: string, @Body() updateUserDto: UpdateUserDTO) {
-    return this.userService.update(uuid, updateUserDto);
+  update(
+    @Param('uuid') uuid: string,
+    @Body() updateUserDto: UpdateUserDTO,
+    @GetCurrentUserData('uuid') tokenUuid: string,
+  ): Promise<Partial<User>> {
+    return this.userService.update(uuid, updateUserDto, tokenUuid);
   }
-
-  @UseInterceptors(AuthLoggingInterceptor)
+  @UseGuards(UuidMatchGuard)
   @UseGuards(AccessGuard)
-  @Delete(':id')
+  @Delete(':uuid')
   @ApiOperation({ summary: 'Delete user' })
-  delete(@Param('id') uuid: string) {
-    return this.userService.delete(uuid);
+  delete(
+    @Param('uuid') uuid: string,
+    @GetCurrentUserData('uuid') tokenUuid: string,
+  ) {
+    return this.userService.delete(uuid, tokenUuid);
   }
   @Get()
   @ApiOperation({ summary: 'TODO' })
@@ -52,9 +58,9 @@ export class UserServiceController {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  @Get(':uuid')
   @ApiOperation({ summary: 'TODO' })
-  findOne(@Param('id') uuid: string) {
+  findOne(@Param('uuid') uuid: string) {
     return this.userService.findOne(uuid);
   }
 }

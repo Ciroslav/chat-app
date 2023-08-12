@@ -7,7 +7,7 @@ type userSessionMetadata =
   | 'role'
   | 'iat'
   | 'exp'
-  | 'refreshToken';
+  | 'token';
 
 export const GetCurrentUserData = createParamDecorator(
   (data: userSessionMetadata | undefined, context: ExecutionContext) => {
@@ -15,7 +15,7 @@ export const GetCurrentUserData = createParamDecorator(
     // console.log(request);
     if (!data) return request.user;
 
-    if (data === 'refreshToken') {
+    if (data === 'token') {
       // Look for the refresh token in the Authorization header
       const refreshToken = request.headers.authorization
         ? request.headers.authorization.replace('Bearer', '').trim()
