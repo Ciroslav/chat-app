@@ -5,9 +5,10 @@ import { compare } from 'bcrypt';
 import { createHash } from 'crypto';
 import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload, Tokens } from './types';
+import { JwtPayload, Tokens, JwtSecrets } from './types';
 import { ServiceLogger } from 'src/common/logger';
 import { ServiceName } from 'src/common/decorators';
+import { ConfigService } from '@nestjs/config';
 
 // 15 minutes Access Token lifespan
 const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
@@ -17,11 +18,14 @@ const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
 @ServiceName('Auth Service')
 @Injectable()
 export class AuthService {
+  private jwtSecrets: JwtSecrets;
   constructor(
+    private readonly configService: ConfigService,
     private readonly logger: ServiceLogger,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {
+    this.jwtSecrets = this.configService.get('jwtSecrets');
     this.logger = new ServiceLogger('Auth Service');
   }
 
@@ -213,7 +217,10 @@ export class AuthService {
           email,
           role,
         },
-        { secret: 'at-secret', expiresIn: ACCESS_TOKEN_EXPIRATION_TIME },
+        {
+          secret: this.jwtSecrets.accessTokenSecret,
+          expiresIn: ACCESS_TOKEN_EXPIRATION_TIME,
+        },
       ),
       this.jwtService.signAsync(
         {
@@ -222,7 +229,10 @@ export class AuthService {
           email,
           role,
         },
-        { secret: 'rt-secret', expiresIn: REFRESH_TOKEN_EXPIRATION_TIME },
+        {
+          secret: this.jwtSecrets.refreshTokenSecret,
+          expiresIn: REFRESH_TOKEN_EXPIRATION_TIME,
+        },
       ),
     ]);
     return {
