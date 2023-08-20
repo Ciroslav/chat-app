@@ -47,3 +47,21 @@ CREATE UNIQUE INDEX "sessions_uuid_key" ON "sessions"("uuid");
 
 -- AddForeignKey
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("uuid") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Create the function for trigger
+CREATE OR REPLACE FUNCTION update_user_last_active_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE "users"
+    SET "lastActiveAt" = NEW."lastAccessedAt"
+    WHERE "uuid" = NEW."userId";
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger for last activity
+CREATE TRIGGER update_last_active_at_trigger
+AFTER INSERT OR UPDATE OF "lastAccessedAt" ON "sessions"
+FOR EACH ROW
+EXECUTE FUNCTION update_user_last_active_at();
