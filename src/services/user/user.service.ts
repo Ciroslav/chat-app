@@ -132,9 +132,34 @@ export class UserService {
     throw new NotImplementedException();
   }
 
-  findOne(id: string) {
-    console.log(id);
-    throw new NotImplementedException();
+  async findOne(uuid: string) {
+    try {
+      return await this.prisma.user.findUniqueOrThrow({
+        where: {
+          uuid: uuid,
+        },
+        select: {
+          id: true,
+          uuid: true,
+          username: true,
+          email: true,
+          country: true,
+          address: true,
+          phoneNumber: true,
+          createdAt: true,
+          updatedAt: true,
+          lastActiveAt: true,
+          status: true,
+          role: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      this.logger.error(error, 'user.service.ts line 160');
+      throw new InternalServerErrorException();
+    }
   }
 
   /* HELPER FUNCTIONS 

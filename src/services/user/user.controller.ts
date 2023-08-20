@@ -17,9 +17,10 @@ import { User } from '@prisma/client';
 import { AccessGuard } from 'src/common/guards';
 import { UuidMatchGuard } from 'src/common/guards/uuid-match.guard';
 import { GetCurrentUserData } from 'src/common/decorators';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 
 @ApiTags(SwaggerTags.Users)
-@Controller('user')
+@Controller('users')
 @ApiBearerAuth()
 export class UserServiceController {
   constructor(private readonly userService: UserService) {}
@@ -52,14 +53,15 @@ export class UserServiceController {
   ) {
     return this.userService.delete(uuid, tokenUuid);
   }
+  @UseGuards(AdminGuard)
   @Get()
-  @ApiOperation({ summary: 'TODO' })
+  @ApiOperation({ summary: 'Admin privilege - get all users' })
   findAll() {
     return this.userService.findAll();
   }
-
+  @UseGuards(AdminGuard)
   @Get(':uuid')
-  @ApiOperation({ summary: 'TODO' })
+  @ApiOperation({ summary: 'Admin privilege - get user by uuid' })
   findOne(@Param('uuid') uuid: string) {
     return this.userService.findOne(uuid);
   }
