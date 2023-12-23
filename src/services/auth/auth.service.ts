@@ -25,7 +25,10 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {
-    this.jwtSecrets = this.configService.get('jwtSecrets');
+    this.jwtSecrets = {
+      accessTokenSecret: this.configService.get('JWT_SECRETS').AT_SECRET,
+      refreshTokenSecret: this.configService.get('JWT_SECRETS').RT_SECRET,
+    };
     this.logger = new ServiceLogger('Auth Service');
   }
 

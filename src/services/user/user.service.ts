@@ -58,6 +58,7 @@ export class UserService {
           `User with given ${error.meta.target[0]} already exists.`,
         );
       }
+      this.logger.error(error, 'user.service.ts line 61');
       throw new InternalServerErrorException();
     }
   }
