@@ -8,7 +8,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { UserService } from './user.service';
+import { UserService } from './services/user.service';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
@@ -22,7 +22,7 @@ import { AdminGuard } from 'src/common/guards/admin.guard';
 @ApiTags(SwaggerTags.Users)
 @Controller('users')
 @ApiBearerAuth()
-export class UserServiceController {
+export class UsersController {
   constructor(private readonly userService: UserService) {}
 
   @Post('/create')
@@ -41,24 +41,27 @@ export class UserServiceController {
     @Body() updateUserDto: UpdateUserDTO,
     @GetCurrentUserData('uuid') tokenUuid: string,
   ): Promise<Partial<User>> {
-    return this.userService.update(uuid, updateUserDto, tokenUuid);
+    return this.userService.updateUser(uuid, updateUserDto, tokenUuid);
   }
-  @UseGuards(UuidMatchGuard)
-  @UseGuards(AccessGuard)
+
   @Delete(':uuid')
   @ApiOperation({ summary: 'Delete user' })
+  @UseGuards(UuidMatchGuard)
+  @UseGuards(AccessGuard)
   delete(
     @Param('uuid') uuid: string,
     @GetCurrentUserData('uuid') tokenUuid: string,
   ) {
-    return this.userService.delete(uuid, tokenUuid);
+    return this.userService.deleteUser(uuid, tokenUuid);
   }
-  @UseGuards(AdminGuard)
+
   @Get()
   @ApiOperation({ summary: 'Admin privilege - get all users' })
+  @UseGuards(AdminGuard)
   findAll() {
     return this.userService.findAll();
   }
+
   @UseGuards(AdminGuard)
   @Get(':uuid')
   @ApiOperation({ summary: 'Admin privilege - get user by uuid' })

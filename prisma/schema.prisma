@@ -1,49 +1,72 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DB_CONNECTION_STRING")
 }
 
 model User {
-  id   Int    @id @default(autoincrement())
-  uuid String @unique
-
-  username     String    @unique
-  email        String    @unique
-  country      String?
-  address      String?
-  phoneNumber  String?
-  passwordHash String
-  createdAt    DateTime  @default(now())
-  lastActiveAt DateTime?
-  updatedAt    DateTime  @updatedAt
-  status       String    @default("ACTIVE")
-  role         String    @default("USER")
-
-  sessions Session[]
+  id             Int          @id @default(autoincrement())
+  uuid           String       @unique
+  username       String       @unique
+  email          String       @unique
+  country        String?
+  address        String?
+  phone_number   String?
+  password_hash  String
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+  last_active_at DateTime?
+  status         String       @default("ACTIVE")
+  role           String       @default("USER")
+  sessions       Session[]
+  friendList1    FriendList[] @relation("FriendListUser1")
+  friendList2    FriendList[] @relation("FriendListUser2")
+  blockedList2   BlockList[]  @relation("BlockingUser")
+  blockedList    BlockList[]  @relation("BlockedUser")
 
   @@map("users")
 }
 
 model Session {
-  id             Int       @id @default(autoincrement())
-  uuid           String    @unique
-  createdAt      DateTime  @default(now())
-  lastAccessedAt DateTime?
-  issuedAt       DateTime
-  expiresAt      DateTime
-  loginIpAdress  String?
-  rtHash         String?
-  role           String
-
-  userId String
-  user   User   @relation(fields: [userId], references: [uuid], onDelete: Cascade)
+  id               Int       @id @default(autoincrement())
+  uuid             String    @unique
+  created_at       DateTime  @default(now())
+  last_accessed_at DateTime?
+  issued_at        DateTime
+  expires_at       DateTime
+  login_ip_address String?
+  rt_hash          String?
+  role             String
+  user_id          String
+  user             User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+model FriendList {
+  id         Int      @id @default(autoincrement())
+  user1_uuid String
+  user2_uuid String
+  created_at DateTime @default(now())
+  status     String   @default("PENDING")
+  user1_rel  User     @relation("FriendListUser1", fields: [user1_uuid], references: [uuid])
+  user2_rel  User     @relation("FriendListUser2", fields: [user2_uuid], references: [uuid])
+
+  @@index([user1_uuid])
+  @@index([user2_uuid])
+  @@map("friend_list")
+}
+
+model BlockList {
+  id           Int      @id @default(autoincrement())
+  user_uuid    String
+  blocked_uuid String
+  created_at   DateTime @default(now())
+  user_rel     User     @relation("BlockingUser", fields: [user_uuid], references: [uuid])
+  blocked_rel  User     @relation("BlockedUser", fields: [blocked_uuid], references: [uuid])
+
+  @@map("block_list")
 }
