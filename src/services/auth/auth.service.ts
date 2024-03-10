@@ -48,7 +48,10 @@ export class AuthService {
       });
     }
     if (!user) throw new ForbiddenException('Incorrect credentials.');
-    const passwordMatches = await compare(loginDto.password, user.passwordHash);
+    const passwordMatches = await compare(
+      loginDto.password,
+      user.password_hash,
+    );
     if (!passwordMatches) {
       this.logger.log(
         `Failed login attempt for user with uuid: '${user.uuid}.'`,
@@ -83,11 +86,11 @@ export class AuthService {
 
     const data = await this.prisma.session.updateMany({
       where: {
-        userId: userId,
-        rtHash: rtHash,
+        user_id: userId,
+        rt_hash: rtHash,
       },
       data: {
-        rtHash: null,
+        rt_hash: null,
       },
     });
     if (data.count === 0) {
@@ -111,11 +114,11 @@ export class AuthService {
 
     const data = await this.prisma.session.updateMany({
       where: {
-        userId: userId,
-        rtHash: { not: null },
+        user_id: userId,
+        rt_hash: { not: null },
       },
       data: {
-        rtHash: null,
+        rt_hash: null,
       },
     });
     this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
@@ -134,13 +137,13 @@ export class AuthService {
     const rtHash = await this.hashToken(refreshToken);
     await this.prisma.session.create({
       data: {
-        userId: userId,
-        rtHash: rtHash,
+        user_id: userId,
+        rt_hash: rtHash,
         uuid: uuid4(),
-        issuedAt: issuedAt,
-        expiresAt: expiresAt,
-        loginIpAdress: loginIp,
-        lastAccessedAt: new Date(),
+        issued_at: issuedAt,
+        expires_at: expiresAt,
+        login_ip_address: loginIp,
+        last_accessed_at: new Date(),
         role: role,
       },
     });
@@ -150,7 +153,7 @@ export class AuthService {
     await this.prisma.session.update({
       where: { id: sessionId },
       data: {
-        lastAccessedAt: new Date(),
+        last_accessed_at: new Date(),
       },
     });
   }
@@ -164,8 +167,8 @@ export class AuthService {
   async findSession(userId: string, rtHash: string): Promise<any | null> {
     return await this.prisma.session.findFirst({
       where: {
-        userId: userId,
-        rtHash: rtHash,
+        user_id: userId,
+        rt_hash: rtHash,
       },
       include: {
         user: true,
@@ -188,7 +191,7 @@ export class AuthService {
     await this.prisma.session.update({
       where: { id: session.id },
       data: {
-        lastAccessedAt: new Date(),
+        last_accessed_at: new Date(),
       },
     });
 

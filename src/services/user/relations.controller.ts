@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Param, UseGuards, Delete } from '@nestjs/common';
 import { RelationsService } from './services/relations.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
@@ -68,7 +59,17 @@ export class RelationsController {
     @Param('uuid') targetUuid: string,
     @GetCurrentUserData('uuid') selfUuid: string,
   ): Promise<any> {
-    return this.relationsService.sendFriendRequest(selfUuid, targetUuid);
+    return this.relationsService.blockUser(selfUuid, targetUuid);
+  }
+
+  @UseGuards(AccessGuard)
+  @Delete('/remove-friend/:uuid')
+  @ApiOperation({ summary: 'Delete friend' })
+  deleteFriend(
+    @Param('uuid') targetUuid: string,
+    @GetCurrentUserData('uuid') selfUuid: string,
+  ): Promise<any> {
+    return this.relationsService.removeFriend(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
@@ -78,6 +79,6 @@ export class RelationsController {
     @Param('uuid') targetUuid: string,
     @GetCurrentUserData('uuid') selfUuid: string,
   ): Promise<any> {
-    return this.relationsService.sendFriendRequest(selfUuid, targetUuid);
+    return this.relationsService.unblockUser(selfUuid, targetUuid);
   }
 }

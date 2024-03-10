@@ -32,10 +32,10 @@ export class UserService {
           uuid: uuid4(),
           email: signupDto.email,
           username: signupDto.username,
-          passwordHash: hash,
+          password_hash: hash,
           country: signupDto.country,
           address: signupDto.address,
-          phoneNumber: signupDto.phoneNumber,
+          phone_number: signupDto.phoneNumber,
         },
         select: {
           id: true,
@@ -44,8 +44,8 @@ export class UserService {
           email: true,
           country: true,
           address: true,
-          phoneNumber: true,
-          createdAt: true,
+          phone_number: true,
+          created_at: true,
           status: true,
           role: true,
         },
@@ -77,7 +77,7 @@ export class UserService {
           username: updateUserDto.username,
           country: updateUserDto.country,
           address: updateUserDto.address,
-          phoneNumber: updateUserDto.phoneNumber,
+          phone_number: updateUserDto.phoneNumber,
         },
         select: {
           id: true,
@@ -86,9 +86,9 @@ export class UserService {
           email: true,
           country: true,
           address: true,
-          phoneNumber: true,
-          createdAt: true,
-          updatedAt: true,
+          phone_number: true,
+          created_at: true,
+          updated_at: true,
           status: true,
           role: true,
         },
@@ -149,10 +149,10 @@ export class UserService {
           email: true,
           country: true,
           address: true,
-          phoneNumber: true,
-          createdAt: true,
-          updatedAt: true,
-          lastActiveAt: true,
+          phone_number: true,
+          created_at: true,
+          updated_at: true,
+          last_active_at: true,
           status: true,
           role: true,
         },
@@ -161,7 +161,7 @@ export class UserService {
       if (error.code === 'P2025') {
         throw new NotFoundException();
       }
-      this.logger.error(error, 'user.service.ts line 160');
+      this.logger.error(error);
       throw new InternalServerErrorException();
     }
   }
