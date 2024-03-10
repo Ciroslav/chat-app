@@ -6,7 +6,7 @@ import {
   NotImplementedException,
   ForbiddenException,
 } from '@nestjs/common';
-import { CreateUserDTO, UpdateUserDTO } from './dto';
+import { CreateUserDTO, UpdateUserDTO } from '../dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from '@prisma/client';
 import { hash } from 'bcrypt';
@@ -62,7 +62,7 @@ export class UserService {
       throw new InternalServerErrorException();
     }
   }
-  async update(
+  async updateUser(
     uuid: string,
     updateUserDto: UpdateUserDTO,
     tokenUuid,
@@ -114,7 +114,10 @@ export class UserService {
     }
   }
 
-  async delete(uuid: string, tokenUuid: string): Promise<{ message: string }> {
+  async deleteUser(
+    uuid: string,
+    tokenUuid: string,
+  ): Promise<{ message: string }> {
     try {
       await this.prisma.user.delete({
         where: {

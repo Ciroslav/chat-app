@@ -5,6 +5,7 @@ export const SWAGGER_BASE_PATH = 'api-docs';
 export enum SwaggerTags {
   Authorization = 'Authorization',
   Users = 'Users',
+  Relations = 'Relations',
 }
 
 export function setupSwagger(app: INestApplication) {

@@ -6,6 +6,9 @@ import { setupSwagger } from './swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {});
   const globalPrefix = 'api';
+  app.enableCors({
+    origin: 'http://localhost:4200',
+  });
   app.setGlobalPrefix(globalPrefix);
   app.useGlobalPipes(new ValidationPipe());
   setupSwagger(app);
