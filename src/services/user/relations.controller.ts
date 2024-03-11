@@ -1,13 +1,22 @@
-import { Controller, Post, Param, UseGuards, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Param,
+  UseGuards,
+  Delete,
+  Get,
+  Query,
+} from '@nestjs/common';
 import { RelationsService } from './services/relations.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
 import { ApiOperation } from '@nestjs/swagger';
 import { AccessGuard } from 'src/common/guards';
 import { GetCurrentUserData } from 'src/common/decorators';
+import { GetManyUsersUnrestrictedDTO } from './dto/getUsers.dto';
 
 @ApiTags(SwaggerTags.Relations)
-@Controller('users')
+@Controller('user')
 @ApiBearerAuth()
 export class RelationsController {
   constructor(private readonly relationsService: RelationsService) {}
@@ -80,5 +89,30 @@ export class RelationsController {
     @GetCurrentUserData('uuid') selfUuid: string,
   ): Promise<any> {
     return this.relationsService.unblockUser(selfUuid, targetUuid);
+  }
+
+  @UseGuards(AccessGuard)
+  @Get('/friends/')
+  @ApiOperation({
+    summary: 'Search for friends by username / get all if empty string as name',
+  })
+  findFriends(
+    @Query() queryParams: GetManyUsersUnrestrictedDTO,
+    @GetCurrentUserData('uuid') uuid: string,
+  ) {
+    return this.relationsService.findFriends(queryParams, uuid);
+  }
+
+  @UseGuards(AccessGuard)
+  @Get('/blocked/')
+  @ApiOperation({
+    summary:
+      'Search for blocked users by username / get all if empty string as name',
+  })
+  findBlocked(
+    @Query() queryParams: GetManyUsersUnrestrictedDTO,
+    @GetCurrentUserData('uuid') uuid: string,
+  ) {
+    return this.relationsService.findBlockedUsers(queryParams, uuid);
   }
 }

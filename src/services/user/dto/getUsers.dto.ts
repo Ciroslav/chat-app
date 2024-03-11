@@ -37,3 +37,25 @@ export class GetManyUsersDTO {
   @Min(1)
   size?: number = 10;
 }
+
+export class GetManyUsersUnrestrictedDTO {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MinLength(0)
+  name: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  size?: number = 10;
+}

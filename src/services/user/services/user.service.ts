@@ -142,7 +142,6 @@ export class UserService {
         AND: { status: 'ACTIVE' },
       },
       select: {
-        id: true,
         uuid: true,
         username: true,
         email: true,
@@ -150,7 +149,6 @@ export class UserService {
         address: true,
         phone_number: true,
         created_at: true,
-        updated_at: true,
         last_active_at: true,
         status: true,
         role: true,
@@ -174,7 +172,6 @@ export class UserService {
         address: true,
         phone_number: true,
         created_at: true,
-        updated_at: true,
         last_active_at: true,
         status: true,
         role: true,

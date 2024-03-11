@@ -15,6 +15,7 @@ export class CreateUserDTO {
   email: string;
   @ApiProperty()
   @IsNotEmpty()
+  @MinLength(3)
   username: string;
   @ApiProperty()
   @IsNotEmpty()
