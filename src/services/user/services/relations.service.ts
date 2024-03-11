@@ -8,6 +8,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
+import { GetManyUsersDTO } from '../dto/getUsers.dto';
 
 @ServiceName('Relations Service')
 @Injectable()
@@ -200,5 +201,87 @@ export class RelationsService {
     }
     this.logger.log(`User ${selfUuid} blocked ${targetUuid}`);
     return { message: 'Success.' };
+  }
+
+  async findFriends(params: GetManyUsersDTO, uuid: string) {
+    const skip = (params.page - 1) * params.size || 0;
+    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+
+    const friends = await this.prisma.friendList.findMany({
+      where: {
+        OR: [
+          { user1_uuid: uuid, status: 'ACCEPTED' },
+          { user2_uuid: uuid, status: 'ACCEPTED' },
+        ],
+      },
+      select: {
+        user1_uuid: true,
+        user2_uuid: true,
+      },
+      skip,
+      take,
+    });
+
+    const friendUUIDs = friends.flatMap((friend) =>
+      friend.user1_uuid === uuid ? [friend.user2_uuid] : [friend.user1_uuid],
+    );
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        uuid: { in: friendUUIDs },
+        username: { contains: params.name || '', mode: 'insensitive' },
+      },
+      select: {
+        uuid: true,
+        username: true,
+        email: true,
+        country: true,
+        address: true,
+        phone_number: true,
+        created_at: true,
+        last_active_at: true,
+        status: true,
+        role: true,
+      },
+    });
+
+    return users;
+  }
+
+  async findBlockedUsers(params: GetManyUsersDTO, uuid: string) {
+    const skip = (params.page - 1) * params.size || 0;
+    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+
+    const blockedUsers = await this.prisma.blockList.findMany({
+      where: { user_uuid: uuid },
+      select: { blocked_uuid: true },
+      skip,
+      take,
+    });
+
+    const blockedUserUUIDs = blockedUsers.map(
+      (blocked) => blocked.blocked_uuid,
+    );
+
+    const users = await this.prisma.user.findMany({
+      where: {
+        uuid: { in: blockedUserUUIDs },
+        username: { contains: params.name || '', mode: 'insensitive' },
+      },
+      select: {
+        id: true,
+        uuid: true,
+        username: true,
+        email: true,
+        country: true,
+        address: true,
+        phone_number: true,
+        created_at: true,
+        last_active_at: true,
+        role: true,
+      },
+    });
+
+    return users;
   }
 }

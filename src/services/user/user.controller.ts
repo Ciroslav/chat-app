@@ -7,6 +7,7 @@ import {
   Delete,
   Put,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './services/user.service';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
@@ -18,6 +19,7 @@ import { AccessGuard } from 'src/common/guards';
 import { UuidMatchGuard } from 'src/common/guards/uuid-match.guard';
 import { GetCurrentUserData } from 'src/common/decorators';
 import { AdminGuard } from 'src/common/guards/admin.guard';
+import { GetAllUsersDTO, GetManyUsersDTO } from './dto/getUsers.dto';
 
 @ApiTags(SwaggerTags.Users)
 @Controller('users')
@@ -28,7 +30,7 @@ export class UsersController {
   @Post('/create')
   @ApiOperation({ summary: 'Create user' })
   @ApiBody({ type: CreateUserDTO })
-  signup(@Body() createUserDto: CreateUserDTO): Promise<Partial<User>> {
+  createUser(@Body() createUserDto: CreateUserDTO): Promise<Partial<User>> {
     return this.userService.createUser(createUserDto);
   }
 
@@ -36,7 +38,7 @@ export class UsersController {
   @UseGuards(AccessGuard)
   @Put(':uuid')
   @ApiOperation({ summary: 'Update user' })
-  update(
+  updateUser(
     @Param('uuid') uuid: string,
     @Body() updateUserDto: UpdateUserDTO,
     @GetCurrentUserData('uuid') tokenUuid: string,
@@ -44,28 +46,35 @@ export class UsersController {
     return this.userService.updateUser(uuid, updateUserDto, tokenUuid);
   }
 
-  @Delete(':uuid')
-  @ApiOperation({ summary: 'Delete user' })
   @UseGuards(UuidMatchGuard)
   @UseGuards(AccessGuard)
-  delete(
+  @Delete(':uuid')
+  @ApiOperation({ summary: 'Delete user' })
+  deleteUser(
     @Param('uuid') uuid: string,
     @GetCurrentUserData('uuid') tokenUuid: string,
   ) {
     return this.userService.deleteUser(uuid, tokenUuid);
   }
 
+  @UseGuards(AccessGuard)
+  @Get('user')
+  @ApiOperation({ summary: 'Search for user by username' })
+  findManyUsers(@Query() queryParams: GetManyUsersDTO) {
+    return this.userService.findManyUsers(queryParams);
+  }
+
+  @UseGuards(AdminGuard)
   @Get()
   @ApiOperation({ summary: 'Admin privilege - get all users' })
-  @UseGuards(AdminGuard)
-  findAll() {
-    return this.userService.findAll();
+  findAllUsers(@Query() queryParams: GetAllUsersDTO) {
+    return this.userService.findAllUsers(queryParams);
   }
 
   @UseGuards(AdminGuard)
   @Get(':uuid')
   @ApiOperation({ summary: 'Admin privilege - get user by uuid' })
-  findOne(@Param('uuid') uuid: string) {
-    return this.userService.findOne(uuid);
+  findUserByid(@Param('uuid') uuid: string) {
+    return this.userService.findUserById(uuid);
   }
 }

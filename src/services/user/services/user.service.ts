@@ -3,7 +3,6 @@ import {
   ConflictException,
   InternalServerErrorException,
   NotFoundException,
-  NotImplementedException,
   ForbiddenException,
 } from '@nestjs/common';
 import { CreateUserDTO, UpdateUserDTO } from '../dto';
@@ -13,6 +12,7 @@ import { hash } from 'bcrypt';
 import { v4 as uuid4 } from 'uuid';
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
+import { GetAllUsersDTO, GetManyUsersDTO } from '../dto/getUsers.dto';
 
 @ServiceName('User Service')
 @Injectable()
@@ -132,11 +132,56 @@ export class UserService {
       }
     }
   }
-  findAll() {
-    throw new NotImplementedException();
+  async findManyUsers(params: GetManyUsersDTO) {
+    const skip = (params.page - 1) * params.size || 0;
+    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+
+    return await this.prisma.user.findMany({
+      where: {
+        username: { contains: params.name, mode: 'insensitive' },
+        AND: { status: 'ACTIVE' },
+      },
+      select: {
+        uuid: true,
+        username: true,
+        email: true,
+        country: true,
+        address: true,
+        phone_number: true,
+        created_at: true,
+        last_active_at: true,
+        status: true,
+        role: true,
+      },
+      skip,
+      take,
+    });
   }
 
-  async findOne(uuid: string) {
+  async findAllUsers(params: GetAllUsersDTO) {
+    const skip = (params.page - 1) * params.size || 0;
+    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+
+    return await this.prisma.user.findMany({
+      select: {
+        id: true,
+        uuid: true,
+        username: true,
+        email: true,
+        country: true,
+        address: true,
+        phone_number: true,
+        created_at: true,
+        last_active_at: true,
+        status: true,
+        role: true,
+      },
+      skip,
+      take,
+    });
+  }
+
+  async findUserById(uuid: string) {
     try {
       return await this.prisma.user.findUniqueOrThrow({
         where: {
