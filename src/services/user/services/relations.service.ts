@@ -130,6 +130,74 @@ export class RelationsService {
     return { message: 'Success' };
   }
 
+  async findPendingSent(selfUuid: string) {
+    const pendingFriends = await this.prisma.friendList.findMany({
+      where: {
+        user1_uuid: selfUuid,
+        status: 'PENDING',
+      }
+    });
+    if (pendingFriends.length > 0) {
+      const userUuids = pendingFriends.map(friendship => friendship.user2_uuid);
+      const users = await this.prisma.user.findMany({
+        where: {
+          uuid: {
+            in: userUuids,
+          },
+        },
+        select: {
+          uuid: true,
+          username: true,
+          email: true,
+          country: true,
+          address: true,
+          phone_number: true,
+          created_at: true,
+          last_active_at: true,
+          status: true,
+          role: true,
+        },
+      });
+  
+      return users;
+    }
+    return []
+  }
+
+  async findPendingReceived(selfUuid: string) {
+    const pendingFriends = await this.prisma.friendList.findMany({
+      where: {
+        user2_uuid: selfUuid,
+        status: 'PENDING',
+      }
+    });
+    if (pendingFriends.length > 0) {
+      const userUuids = pendingFriends.map(friendship => friendship.user1_uuid);
+      const users = await this.prisma.user.findMany({
+        where: {
+          uuid: {
+            in: userUuids,
+          },
+        },
+        select: {
+          uuid: true,
+          username: true,
+          email: true,
+          country: true,
+          address: true,
+          phone_number: true,
+          created_at: true,
+          last_active_at: true,
+          status: true,
+          role: true,
+        },
+      });
+  
+      return users;
+    }
+    return []
+  }
+
   async removeFriend(selfUuid: string, targetUuid: string) {
     const relation = await this.prisma.friendList.deleteMany({
       where: {
@@ -269,7 +337,6 @@ export class RelationsService {
         username: { contains: params.name || '', mode: 'insensitive' },
       },
       select: {
-        id: true,
         uuid: true,
         username: true,
         email: true,

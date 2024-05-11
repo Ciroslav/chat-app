@@ -38,7 +38,6 @@ export class UserService {
           phone_number: signupDto.phoneNumber,
         },
         select: {
-          id: true,
           uuid: true,
           username: true,
           email: true,
@@ -80,7 +79,6 @@ export class UserService {
           phone_number: updateUserDto.phoneNumber,
         },
         select: {
-          id: true,
           uuid: true,
           username: true,
           email: true,
@@ -164,7 +162,6 @@ export class UserService {
 
     return await this.prisma.user.findMany({
       select: {
-        id: true,
         uuid: true,
         username: true,
         email: true,
@@ -188,7 +185,6 @@ export class UserService {
           uuid: uuid,
         },
         select: {
-          id: true,
           uuid: true,
           username: true,
           email: true,

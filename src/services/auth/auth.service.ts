@@ -11,7 +11,7 @@ import { ServiceName } from 'src/common/decorators';
 import { ConfigService } from '@nestjs/config';
 
 // 15 minutes Access Token lifespan
-const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
+const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15 * 100; //tmp hack for local development
 // 2 weeks Refresh Token lifespan
 const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
 

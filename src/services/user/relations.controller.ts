@@ -82,7 +82,7 @@ export class RelationsController {
   }
 
   @UseGuards(AccessGuard)
-  @Post('/unblock-user/:uuid')
+  @Delete('/unblock-user/:uuid')
   @ApiOperation({ summary: 'Unblock user' })
   unblockUser(
     @Param('uuid') targetUuid: string,
@@ -114,5 +114,23 @@ export class RelationsController {
     @GetCurrentUserData('uuid') uuid: string,
   ) {
     return this.relationsService.findBlockedUsers(queryParams, uuid);
+  }
+
+  @UseGuards(AccessGuard)
+  @Get('/pending-sent/')
+  @ApiOperation({
+    summary: 'Search for pending sent friend requests ',
+  })
+  findPendingSent(@GetCurrentUserData('uuid') uuid: string) {
+    return this.relationsService.findPendingSent(uuid);
+  }
+
+  @UseGuards(AccessGuard)
+  @Get('/pending-received/')
+  @ApiOperation({
+    summary: 'Search for pending received friend requests',
+  })
+  findPendingReceived(@GetCurrentUserData('uuid') uuid: string) {
+    return this.relationsService.findPendingReceived(uuid);
   }
 }
