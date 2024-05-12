@@ -217,6 +217,10 @@ export class RelationsService {
   }
 
   async blockUser(selfUuid: string, targetUuid: string) {
+    if(targetUuid===selfUuid){
+      throw new ConflictException('Can not block self.')
+    }
+
     const relation = await this.prisma.blockList.findFirst({
       where: {
         user_uuid: selfUuid,
