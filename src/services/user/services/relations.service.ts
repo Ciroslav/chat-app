@@ -31,8 +31,6 @@ export class RelationsService {
       where: { uuid: targetUuid },
     });
 
-    console.log(user2);
-
     if (!user2) {
       throw new NotFoundException('User does not exist.');
     }
@@ -135,10 +133,12 @@ export class RelationsService {
       where: {
         user1_uuid: selfUuid,
         status: 'PENDING',
-      }
+      },
     });
     if (pendingFriends.length > 0) {
-      const userUuids = pendingFriends.map(friendship => friendship.user2_uuid);
+      const userUuids = pendingFriends.map(
+        (friendship) => friendship.user2_uuid,
+      );
       const users = await this.prisma.user.findMany({
         where: {
           uuid: {
@@ -158,10 +158,10 @@ export class RelationsService {
           role: true,
         },
       });
-  
+
       return users;
     }
-    return []
+    return [];
   }
 
   async findPendingReceived(selfUuid: string) {
@@ -169,10 +169,12 @@ export class RelationsService {
       where: {
         user2_uuid: selfUuid,
         status: 'PENDING',
-      }
+      },
     });
     if (pendingFriends.length > 0) {
-      const userUuids = pendingFriends.map(friendship => friendship.user1_uuid);
+      const userUuids = pendingFriends.map(
+        (friendship) => friendship.user1_uuid,
+      );
       const users = await this.prisma.user.findMany({
         where: {
           uuid: {
@@ -192,10 +194,10 @@ export class RelationsService {
           role: true,
         },
       });
-  
+
       return users;
     }
-    return []
+    return [];
   }
 
   async removeFriend(selfUuid: string, targetUuid: string) {
@@ -217,8 +219,8 @@ export class RelationsService {
   }
 
   async blockUser(selfUuid: string, targetUuid: string) {
-    if(targetUuid===selfUuid){
-      throw new ConflictException('Can not block self.')
+    if (targetUuid === selfUuid) {
+      throw new ConflictException('Can not block self.');
     }
 
     const relation = await this.prisma.blockList.findFirst({
@@ -354,5 +356,63 @@ export class RelationsService {
     });
 
     return users;
+  }
+
+  async findAllUsersFiltered(params: GetManyUsersDTO, selfUuid: string) {
+    const skip = (params.page - 1) * params.size || 0;
+    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+
+    const friends = await this.prisma.friendList.findMany({
+      where: {
+        OR: [{ user1_uuid: selfUuid }, { user2_uuid: selfUuid }],
+      },
+      select: {
+        user1_uuid: true,
+        user2_uuid: true,
+      },
+    });
+    const friendUuids = friends.flatMap((friend) =>
+      friend.user1_uuid === selfUuid
+        ? [friend.user2_uuid]
+        : [friend.user1_uuid],
+    );
+
+    const blocked = await this.prisma.blockList.findMany({
+      where: {
+        OR: [{ user_uuid: selfUuid }, { blocked_uuid: selfUuid }],
+      },
+      select: {
+        user_uuid: true,
+        blocked_uuid: true,
+      },
+    });
+    const blockedUuids = blocked.flatMap((blocked) =>
+      blocked.user_uuid === selfUuid
+        ? [blocked.blocked_uuid]
+        : [blocked.user_uuid],
+    );
+
+    const uuidsToFilter = [...friendUuids, ...blockedUuids, selfUuid];
+
+    return await this.prisma.user.findMany({
+      where: {
+        uuid: { not: { in: uuidsToFilter } },
+        username: { contains: params.name || '', mode: 'insensitive' },
+      },
+      select: {
+        uuid: true,
+        username: true,
+        email: true,
+        country: true,
+        address: true,
+        phone_number: true,
+        created_at: true,
+        last_active_at: true,
+        status: true,
+        role: true,
+      },
+      skip,
+      take,
+    });
   }
 }

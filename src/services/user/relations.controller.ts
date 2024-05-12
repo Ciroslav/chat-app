@@ -133,4 +133,16 @@ export class RelationsController {
   findPendingReceived(@GetCurrentUserData('uuid') uuid: string) {
     return this.relationsService.findPendingReceived(uuid);
   }
+
+  @UseGuards(AccessGuard)
+  @Get('/users/')
+  @ApiOperation({
+    summary: 'Search for users eligible for friend request',
+  })
+  findUsersFiltered(
+    @Query() queryParams: GetManyUsersUnrestrictedDTO,
+    @GetCurrentUserData('uuid') uuid: string,
+  ) {
+    return this.relationsService.findAllUsersFiltered(queryParams, uuid);
+  }
 }
