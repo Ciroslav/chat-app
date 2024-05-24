@@ -1,11 +1,15 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DB_CONNECTION_STRING")
+  schemas  = ["user_management", "conversations"]
 }
+
+// User management
 
 model User {
   id             Int          @id @default(autoincrement())
@@ -28,45 +32,90 @@ model User {
   blockedList    BlockList[]  @relation("BlockedUser")
 
   @@map("users")
+  @@schema("user_management")
 }
 
 model Session {
   id               Int       @id @default(autoincrement())
   uuid             String    @unique
-  created_at       DateTime  @default(now())
-  last_accessed_at DateTime?
   issued_at        DateTime
   expires_at       DateTime
   login_ip_address String?
   rt_hash          String?
   role             String
   user_id          String
+  created_at       DateTime  @default(now())
+  last_accessed_at DateTime?
   user             User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
+  @@schema("user_management")
 }
 
 model FriendList {
   id         Int      @id @default(autoincrement())
   user1_uuid String
   user2_uuid String
-  created_at DateTime @default(now())
   status     String   @default("PENDING")
   user1_rel  User     @relation("FriendListUser1", fields: [user1_uuid], references: [uuid])
   user2_rel  User     @relation("FriendListUser2", fields: [user2_uuid], references: [uuid])
+  created_at DateTime @default(now())
 
   @@index([user1_uuid])
   @@index([user2_uuid])
   @@map("friend_list")
+  @@schema("user_management")
 }
 
 model BlockList {
   id           Int      @id @default(autoincrement())
   user_uuid    String
   blocked_uuid String
-  created_at   DateTime @default(now())
   user_rel     User     @relation("BlockingUser", fields: [user_uuid], references: [uuid])
   blocked_rel  User     @relation("BlockedUser", fields: [blocked_uuid], references: [uuid])
+  created_at   DateTime @default(now())
 
   @@map("block_list")
+  @@schema("user_management")
+}
+
+// Messages
+
+model Message {
+  id              Int          @id @default(autoincrement())
+  author          String
+  content         String
+  attachment_url  String?
+  conversation_id Int
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+  pinned          Boolean      @default(false)
+  deleted         Boolean      @default(false)
+  conversation    Conversation @relation(fields: [conversation_id], references: [id])
+
+  @@map("message")
+  @@schema("conversations")
+}
+
+model Conversation {
+  id         Int       @id @default(autoincrement())
+  creator    String
+  created_at DateTime  @default(now())
+  Message    Message[]
+
+  @@map("conversations")
+  @@schema("conversations")
+}
+
+model ConversationParticipants {
+  id              Int      @id @default(autoincrement())
+  user            String
+  conversation_id Int
+  joined_at       DateTime @default(now())
+  left_at         DateTime
+  limited_access  Boolean
+  access_since    DateTime
+
+  @@map("conversations_users")
+  @@schema("conversations")
 }
