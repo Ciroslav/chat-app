@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build:db": "docker-compose up -d && sleep 1 && npx prisma migrate dev",
-    "teardown:db": "docker-compose down",
+    "teardown:db": "docker-compose down --volumes",
     "restart:db": "npm run teardown:db && sleep 1 && npm run build:db",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
