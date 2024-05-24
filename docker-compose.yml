@@ -7,4 +7,4 @@ services:
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: admin
-    POSTGRES_DB: user_mng
+    POSTGRES_DB: chatio
