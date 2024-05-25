@@ -10,7 +10,7 @@ async function bootstrap() {
     origin: 'http://localhost:4200',
   });
   app.setGlobalPrefix(globalPrefix);
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
   setupSwagger(app);
   await app.listen(3000);
 }
