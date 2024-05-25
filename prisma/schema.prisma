@@ -6,10 +6,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DB_CONNECTION_STRING")
-  schemas  = ["user_management", "messages"]
+  schemas  = ["messages", "user_management"]
 }
-
-// User management
 
 model User {
   id             Int          @id @default(autoincrement())
@@ -25,11 +23,11 @@ model User {
   last_active_at DateTime?
   status         String       @default("ACTIVE")
   role           String       @default("USER")
-  sessions       Session[]
+  blockedList    BlockList[]  @relation("BlockedUser")
+  blockedList2   BlockList[]  @relation("BlockingUser")
   friendList1    FriendList[] @relation("FriendListUser1")
   friendList2    FriendList[] @relation("FriendListUser2")
-  blockedList2   BlockList[]  @relation("BlockingUser")
-  blockedList    BlockList[]  @relation("BlockedUser")
+  sessions       Session[]
 
   @@map("users")
   @@schema("user_management")
@@ -57,9 +55,9 @@ model FriendList {
   user1_uuid String
   user2_uuid String
   status     String   @default("PENDING")
+  created_at DateTime @default(now())
   user1_rel  User     @relation("FriendListUser1", fields: [user1_uuid], references: [uuid])
   user2_rel  User     @relation("FriendListUser2", fields: [user2_uuid], references: [uuid])
-  created_at DateTime @default(now())
 
   @@index([user1_uuid])
   @@index([user2_uuid])
@@ -71,15 +69,25 @@ model BlockList {
   id           Int      @id @default(autoincrement())
   user_uuid    String
   blocked_uuid String
-  user_rel     User     @relation("BlockingUser", fields: [user_uuid], references: [uuid])
-  blocked_rel  User     @relation("BlockedUser", fields: [blocked_uuid], references: [uuid])
   created_at   DateTime @default(now())
+  blocked_rel  User     @relation("BlockedUser", fields: [blocked_uuid], references: [uuid])
+  user_rel     User     @relation("BlockingUser", fields: [user_uuid], references: [uuid])
 
   @@map("block_list")
   @@schema("user_management")
 }
 
-// Messages
+model Conversation {
+  id                  Int                        @id @default(autoincrement())
+  creator             String
+  created_at          DateTime                   @default(now())
+  public              Boolean?                   @default(false)
+  conversations_users ConversationParticipants[]
+  Message             Message[]
+
+  @@map("conversations")
+  @@schema("messages")
+}
 
 model Message {
   id              Int          @id @default(autoincrement())
@@ -97,24 +105,15 @@ model Message {
   @@schema("messages")
 }
 
-model Conversation {
-  id         Int       @id @default(autoincrement())
-  creator    String
-  created_at DateTime  @default(now())
-  Message    Message[]
-
-  @@map("conversations")
-  @@schema("messages")
-}
-
 model ConversationParticipants {
-  id              Int      @id @default(autoincrement())
+  id              Int          @id @default(autoincrement())
   user            String
   conversation_id Int
-  joined_at       DateTime @default(now())
-  left_at         DateTime
-  limited_access  Boolean
-  access_since    DateTime
+  joined_at       DateTime     @default(now())
+  left_at         String?
+  limited_access  Boolean?
+  access_since    String?
+  conversations   Conversation @relation(fields: [conversation_id], references: [id])
 
   @@map("conversations_users")
   @@schema("messages")

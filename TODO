@@ -1,0 +1,19 @@
+FEATURE:
+Create Gateway for websocket communication
+->
+Track online status
+
+access_since - map Date correctly when sending data from client to database
+
+
+
+REFACTOR:
+
+Refactor logger, accept two params, message and object (to be stringified)
+
+Create and use repositories instead of prisma in services
+
+On patch conversation implement logic that will skip adding duplicates (same userId per conversationId)
+
+
+

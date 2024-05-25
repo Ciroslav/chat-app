@@ -22,8 +22,8 @@ import { AdminGuard } from 'src/common/guards/admin.guard';
 import { GetAllUsersDTO, GetManyUsersDTO } from './dto/getUsers.dto';
 
 @ApiTags(SwaggerTags.Users)
-@Controller('users')
 @ApiBearerAuth()
+@Controller('users')
 export class UsersController {
   constructor(private readonly userService: UserService) {}
 

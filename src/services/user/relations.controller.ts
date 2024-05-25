@@ -16,8 +16,8 @@ import { GetCurrentUserData } from 'src/common/decorators';
 import { GetManyUsersUnrestrictedDTO } from './dto/getUsers.dto';
 
 @ApiTags(SwaggerTags.Relations)
-@Controller('user')
 @ApiBearerAuth()
+@Controller('user')
 export class RelationsController {
   constructor(private readonly relationsService: RelationsService) {}
 
