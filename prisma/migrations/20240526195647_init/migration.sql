@@ -28,13 +28,11 @@ CREATE TABLE "user_management"."users" (
 CREATE TABLE "user_management"."sessions" (
     "id" SERIAL NOT NULL,
     "user_id" TEXT NOT NULL,
-    "username" TEXT NOT NULL,
     "issued_at" TIMESTAMP(3) NOT NULL,
     "expires_at" TIMESTAMP(3) NOT NULL,
     "login_ip_address" TEXT,
     "rt_hash" TEXT,
     "role" TEXT NOT NULL,
-    "preferred_username" TEXT,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "last_accessed_at" TIMESTAMP(3),
 
