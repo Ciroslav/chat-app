@@ -17,10 +17,7 @@ import { GetAllUsersDTO, GetManyUsersDTO } from '../dto/getUsers.dto';
 @ServiceName('User Service')
 @Injectable()
 export class UserService {
-  constructor(
-    private readonly logger: ServiceLogger,
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly logger: ServiceLogger, private readonly prisma: PrismaService) {
     this.logger = new ServiceLogger('User Service');
   }
 
@@ -54,19 +51,13 @@ export class UserService {
       return newUser;
     } catch (error) {
       if (error.code === 'P2002') {
-        throw new ConflictException(
-          `User with given ${error.meta.target[0]} already exists.`,
-        );
+        throw new ConflictException(`User with given ${error.meta.target[0]} already exists.`);
       }
       this.logger.error(error, 'user.service.ts line 61');
       throw new InternalServerErrorException();
     }
   }
-  async updateUser(
-    uuid: string,
-    updateUserDto: UpdateUserDTO,
-    tokenUuid,
-  ): Promise<Partial<User>> {
+  async updateUser(uuid: string, updateUserDto: UpdateUserDTO, tokenUuid): Promise<Partial<User>> {
     try {
       const updatedUser = await this.prisma.user.update({
         where: {
@@ -93,19 +84,11 @@ export class UserService {
           role: true,
         },
       });
-      this.logger.log(
-        `User updated:\n${JSON.stringify(
-          updatedUser,
-          null,
-          2,
-        )} by '${tokenUuid}'`,
-      );
+      this.logger.log(`User updated:\n${JSON.stringify(updatedUser, null, 2)} by '${tokenUuid}'`);
       return updatedUser;
     } catch (error) {
       if (error.code === 'P2002') {
-        throw new ConflictException(
-          `User with given ${error.meta.target[0]} already exists.`,
-        );
+        throw new ConflictException(`User with given ${error.meta.target[0]} already exists.`);
       }
       if (error.code === 'P2025') {
         console.log(error);
@@ -114,10 +97,7 @@ export class UserService {
     }
   }
 
-  async deleteUser(
-    uuid: string,
-    tokenUuid: string,
-  ): Promise<{ message: string }> {
+  async deleteUser(uuid: string, tokenUuid: string): Promise<{ message: string }> {
     try {
       await this.prisma.user.delete({
         where: {
@@ -133,8 +113,8 @@ export class UserService {
     }
   }
   async findManyUsers(params: GetManyUsersDTO) {
-    const skip = (params.page - 1) * params.size || 0;
-    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+    const skip = (params.page - 1) * params.limit || 0;
+    const take = parseInt(params.limit as unknown as string, 10) || 10; //cast param from String to Number
 
     return await this.prisma.user.findMany({
       where: {
@@ -210,7 +190,7 @@ export class UserService {
   }
 
   /* HELPER FUNCTIONS 
-<------------------------------------------------------------------------------------------------------------------------>
+<---------------------------------------------------------------------------------------------------------------------->
 */
 
   private async hashPassword(data: string) {

@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Put,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, UseGuards, Query } from '@nestjs/common';
 import { UserService } from './services/user.service';
 import { CreateUserDTO, UpdateUserDTO } from './dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -50,10 +40,7 @@ export class UsersController {
   @UseGuards(AccessGuard)
   @Delete(':uuid')
   @ApiOperation({ summary: 'Delete user' })
-  deleteUser(
-    @Param('uuid') uuid: string,
-    @GetCurrentUserData('uuid') tokenUuid: string,
-  ) {
+  deleteUser(@Param('uuid') uuid: string, @GetCurrentUserData('uuid') tokenUuid: string) {
     return this.userService.deleteUser(uuid, tokenUuid);
   }
 

@@ -7,7 +7,7 @@ export enum SwaggerTags {
   Users = 'Users',
   Relations = 'Relations',
   Conversations = 'Conversations',
-  Messages = 'Messages'
+  Messages = 'Messages',
 }
 
 export function setupSwagger(app: INestApplication) {
@@ -15,10 +15,6 @@ export function setupSwagger(app: INestApplication) {
     .setTitle('Chat Application monolith')
     .setDescription('Chat app REST API doccumentation')
     .setVersion('1.0')
-    .addTag(SwaggerTags.Authorization)
-    .addTag(SwaggerTags.Users)
-    .addTag(SwaggerTags.Relations)
-    .addTag(SwaggerTags.Conversations)
     .addBearerAuth()
     .build();
 

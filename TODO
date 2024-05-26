@@ -5,11 +5,20 @@ Track online status
 
 access_since - map Date correctly when sending data from client to database
 
+Storage service
+->
+upload attachments, serve them statically
+
+Search for messages
+
+
 
 
 REFACTOR:
 
 Refactor logger, accept two params, message and object (to be stringified)
+
+Refactor relationships - use relationship type
 
 Create and use repositories instead of prisma in services
 

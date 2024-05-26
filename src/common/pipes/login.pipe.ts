@@ -7,9 +7,7 @@ export class LoginDtoValidatorPipe implements PipeTransform {
     const { email, username, password } = value as LoginDto;
 
     if (!email && !username) {
-      throw new BadRequestException(
-        'Either email or username must be provided.',
-      );
+      throw new BadRequestException('Either email or username must be provided.');
     }
 
     const validatedDto: Partial<LoginDto> = {};

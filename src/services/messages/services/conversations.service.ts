@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -13,26 +9,20 @@ import { UpdateConversationDto } from '../dto/update-conversation.dto';
 @ServiceName('Conversations service')
 @Injectable()
 export class ConversationsService {
-  constructor(
-    private readonly logger: ServiceLogger,
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly logger: ServiceLogger, private readonly prisma: PrismaService) {
     this.logger = new ServiceLogger(ConversationsService);
   }
 
   //TODO Add mapper
-  async create(createConversationDto: CreateConversationDto, selfUuid: string) {
+  async createConversation(createConversationDto: CreateConversationDto, selfUuid: string) {
     const { participants, publicChat } = createConversationDto;
     participants.push(selfUuid);
     const conversation = await this.prisma.conversation.create({
       data: { creator: selfUuid, public: publicChat },
     });
 
-    //Add participants
     const prismaPayload = [];
-    participants.map((el) =>
-      prismaPayload.push({ user: el, conversation_id: conversation.id }),
-    );
+    participants.map((el) => prismaPayload.push({ user: el, conversation_id: conversation.id }));
     await this.prisma.conversationParticipants.createMany({
       data: prismaPayload,
     });
@@ -46,13 +36,9 @@ export class ConversationsService {
     });
   }
 
-  //TODO Refactor ConversationParticipant guard
   async findOne(conversationId: number, selfUuid: string) {
-    const conversationParticipant =
-      await this.prisma.conversationParticipants.count({
-        where: { conversation_id: conversationId, user: selfUuid },
-      });
-    if (conversationParticipant == 0) {
+    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
+    if (!chatParticipant) {
       throw new ForbiddenException('Not participant of this chat');
     }
     return await this.prisma.conversation.findMany({
@@ -68,16 +54,9 @@ export class ConversationsService {
   }
 
   //TODO IMPLEMENT LOGIC FOR SKIPPING DUPLICATES
-  async update(
-    conversationId: number,
-    updateConversationDto: UpdateConversationDto,
-    selfUuid: string,
-  ) {
-    const conversationParticipant =
-      await this.prisma.conversationParticipants.count({
-        where: { conversation_id: conversationId, user: selfUuid },
-      });
-    if (conversationParticipant == 0) {
+  async addParticipants(conversationId: number, updateConversationDto: UpdateConversationDto, selfUuid: string) {
+    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
+    if (!chatParticipant) {
       throw new ForbiddenException('Not participant of this chat');
     }
     const { participants, limitedAccess, accessSince } = updateConversationDto;
@@ -98,7 +77,7 @@ export class ConversationsService {
     return { success: true };
   }
 
-  async remove(conversatioId: number, selfUUid: string) {
+  async leaveConversation(conversatioId: number, selfUUid: string) {
     const response = await this.prisma.conversationParticipants.updateMany({
       where: { user: selfUUid, conversation_id: conversatioId, left_at: null },
       //TODO FIX THIS
@@ -108,5 +87,12 @@ export class ConversationsService {
       throw new NotFoundException('Conversation not found.');
     }
     return { success: true };
+  }
+
+  private async isChatParticipant(conversationId: number, selfUuid) {
+    const response = await this.prisma.conversationParticipants.count({
+      where: { conversation_id: conversationId, user: selfUuid },
+    });
+    return !(response === 0);
   }
 }

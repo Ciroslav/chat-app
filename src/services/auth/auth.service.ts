@@ -8,11 +8,7 @@ import { JwtPayload, Tokens, JwtSecrets } from './types';
 import { ServiceLogger } from 'src/common/logger';
 import { ServiceName } from 'src/common/decorators';
 import { ConfigService } from '@nestjs/config';
-
-// 15 minutes Access Token lifespan
-const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15 * 100; //tmp hack for local development
-// 2 weeks Refresh Token lifespan
-const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
+import { ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME } from 'src/contants';
 
 @ServiceName('Auth Service')
 @Injectable()
@@ -47,26 +43,15 @@ export class AuthService {
       });
     }
     if (!user) throw new ForbiddenException('Incorrect credentials.');
-    const passwordMatches = await compare(
-      loginDto.password,
-      user.password_hash,
-    );
+    const passwordMatches = await compare(loginDto.password, user.password_hash);
     if (!passwordMatches) {
-      this.logger.log(
-        `Failed login attempt for user with uuid: '${user.uuid}.'`,
-      );
+      this.logger.log(`Failed login attempt for user with uuid: '${user.uuid}.'`);
       throw new ForbiddenException('Incorrect credentials.');
     }
     if (user.status !== 'ACTIVE') {
       throw new ForbiddenException('Account expired or disabled.');
     }
-    const tokens = await this.issueTokens(
-      user.uuid,
-      user.username,
-      user.preferredUsername,
-      user.email,
-      user.role,
-    );
+    const tokens = await this.issueTokens(user.uuid, user.username, user.preferredUsername, user.email, user.role);
 
     await this.createSession(
       user.uuid,
@@ -80,10 +65,7 @@ export class AuthService {
     return tokens;
   }
 
-  async logoutOne(
-    userId: string,
-    refreshToken: string,
-  ): Promise<{ message: string }> {
+  async logoutOne(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
 
     const data = await this.prisma.session.updateMany({
@@ -104,10 +86,7 @@ export class AuthService {
       message: 'Operation successful',
     };
   }
-  async logoutAll(
-    userId: string,
-    refreshToken: string,
-  ): Promise<{ message: string }> {
+  async logoutAll(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
     if (!session || session.userId !== userId) {
@@ -183,10 +162,7 @@ export class AuthService {
   }
 
   //Generate new Access Token, while persisting Refresh Token
-  async refreshAccessToken(
-    userId: string,
-    refreshToken: string,
-  ): Promise<Tokens> {
+  async refreshAccessToken(userId: string, refreshToken: string): Promise<Tokens> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
     if (!session || session.userId !== userId) {
@@ -234,7 +210,7 @@ export class AuthService {
         },
         {
           secret: this.jwtSecrets.accessTokenSecret,
-          expiresIn: ACCESS_TOKEN_EXPIRATION_TIME,
+          expiresIn: ACCESS_TOKEN_LIFETIME,
         },
       ),
       this.jwtService.signAsync(
@@ -247,7 +223,7 @@ export class AuthService {
         },
         {
           secret: this.jwtSecrets.refreshTokenSecret,
-          expiresIn: REFRESH_TOKEN_EXPIRATION_TIME,
+          expiresIn: REFRESH_TOKEN_LIFETIME,
         },
       ),
     ]);
@@ -257,7 +233,7 @@ export class AuthService {
     };
   }
   /* HELPER FUNCTIONS 
-<------------------------------------------------------------------------------------------------------------------------>
+<---------------------------------------------------------------------------------------------------------------------->
 */
   private convertTimestampToDate(timestamp: number) {
     return new Date(timestamp * 1000).toISOString();
