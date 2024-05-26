@@ -3,17 +3,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto';
 import { compare } from 'bcrypt';
 import { createHash } from 'crypto';
-import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, Tokens, JwtSecrets } from './types';
 import { ServiceLogger } from 'src/common/logger';
 import { ServiceName } from 'src/common/decorators';
 import { ConfigService } from '@nestjs/config';
-
-// 15 minutes Access Token lifespan
-const ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15 * 100; //tmp hack for local development
-// 2 weeks Refresh Token lifespan
-const REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24 * 14;
+import { ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME } from 'src/contants';
 
 @ServiceName('Auth Service')
 @Injectable()
@@ -48,43 +43,25 @@ export class AuthService {
       });
     }
     if (!user) throw new ForbiddenException('Incorrect credentials.');
-    const passwordMatches = await compare(
-      loginDto.password,
-      user.password_hash,
-    );
+    const passwordMatches = await compare(loginDto.password, user.password_hash);
     if (!passwordMatches) {
-      this.logger.log(
-        `Failed login attempt for user with uuid: '${user.uuid}.'`,
-      );
+      this.logger.log(`Failed login attempt for user with uuid: '${user.uuid}. Ip address: ${loginIp}`);
       throw new ForbiddenException('Incorrect credentials.');
     }
     if (user.status !== 'ACTIVE') {
       throw new ForbiddenException('Account expired or disabled.');
     }
-    const tokens = await this.issueTokens(
-      user.uuid,
-      user.email,
-      user.username,
-      user.role,
-    );
+    const tokens = await this.issueTokens(user.uuid, user.username, user.preferredUsername, user.email, user.role);
 
-    await this.createSession(
-      user.uuid,
-      tokens.refresh_token,
-      loginIp,
-      user.role,
-    );
+    await this.createSession(user.uuid, tokens.refresh_token, loginIp, user.role);
     this.logger.log(`User with uuid '${user.uuid}' successfully logged in.`);
     return tokens;
   }
 
-  async logoutOne(
-    userId: string,
-    refreshToken: string,
-  ): Promise<{ message: string }> {
+  async logoutOne(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
 
-    const data = await this.prisma.session.updateMany({
+    const data = await this.prisma.userSession.updateMany({
       where: {
         user_id: userId,
         rt_hash: rtHash,
@@ -102,17 +79,14 @@ export class AuthService {
       message: 'Operation successful',
     };
   }
-  async logoutAll(
-    userId: string,
-    refreshToken: string,
-  ): Promise<{ message: string }> {
+  async logoutAll(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
-    if (!session || session.userId !== userId) {
+    if (!session || session.user_id !== userId) {
       throw new ForbiddenException(); // Invalid session or session not associated with the user
     }
 
-    const data = await this.prisma.session.updateMany({
+    const data = await this.prisma.userSession.updateMany({
       where: {
         user_id: userId,
         rt_hash: { not: null },
@@ -124,81 +98,23 @@ export class AuthService {
     this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
     return { message: `Number of sessions invalidated: ${data.count}` };
   }
-  async createSession(
-    userId: string,
-    refreshToken: string,
-    loginIp: string,
-    // use ENUM instead
-    role: string,
-  ): Promise<void> {
-    const decodedToken = this.jwtService.decode(refreshToken) as JwtPayload;
-    const issuedAt = this.convertTimestampToDate(decodedToken.iat);
-    const expiresAt = this.convertTimestampToDate(decodedToken.exp);
-    const rtHash = await this.hashToken(refreshToken);
-    await this.prisma.session.create({
-      data: {
-        user_id: userId,
-        rt_hash: rtHash,
-        uuid: uuid4(),
-        issued_at: issuedAt,
-        expires_at: expiresAt,
-        login_ip_address: loginIp,
-        last_accessed_at: new Date(),
-        role: role,
-      },
-    });
-  }
-
-  async updateSessionLastAccessed(sessionId: number): Promise<void> {
-    await this.prisma.session.update({
-      where: { id: sessionId },
-      data: {
-        last_accessed_at: new Date(),
-      },
-    });
-  }
-
-  private async deleteSession(sessionId: number): Promise<void> {
-    await this.prisma.session.delete({
-      where: { id: sessionId },
-    });
-  }
-
-  async findSession(userId: string, rtHash: string): Promise<any | null> {
-    return await this.prisma.session.findFirst({
-      where: {
-        user_id: userId,
-        rt_hash: rtHash,
-      },
-      include: {
-        user: true,
-      },
-    });
-  }
 
   //Generate new Access Token, while persisting Refresh Token
-  async refreshAccessToken(
-    userId: string,
-    refreshToken: string,
-  ): Promise<Tokens> {
+  async refreshAccessToken(userId: string, refreshToken: string): Promise<Tokens> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
-    if (!session || session.userId !== userId) {
+    if (!session || session.user_id !== userId) {
       throw new ForbiddenException(); // Invalid session or session not associated with the user
     }
 
     // Update last accessed time for the session
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: {
-        last_accessed_at: new Date(),
-      },
-    });
+    await this.updateSessionLastAccessed(session.id);
 
     const { access_token } = await this.issueTokens(
       userId,
-      session.user.email,
       session.user.username,
+      session.user.preferred_username,
+      session.user.email,
       session.user.role,
     );
 
@@ -209,10 +125,11 @@ export class AuthService {
   }
 
   //Generate new Pair of Refresh/Access Token
-  async issueTokens(
+  private async issueTokens(
     userId: string,
-    email: string,
     username: string,
+    preferredUsername: string = username,
+    email: string,
     role: string,
   ): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
@@ -220,24 +137,26 @@ export class AuthService {
         {
           uuid: userId,
           username: username,
+          preferredUsername: preferredUsername,
           email,
           role,
         },
         {
           secret: this.jwtSecrets.accessTokenSecret,
-          expiresIn: ACCESS_TOKEN_EXPIRATION_TIME,
+          expiresIn: ACCESS_TOKEN_LIFETIME,
         },
       ),
       this.jwtService.signAsync(
         {
           uuid: userId,
           username: username,
+          preferredUsername: preferredUsername,
           email,
           role,
         },
         {
           secret: this.jwtSecrets.refreshTokenSecret,
-          expiresIn: REFRESH_TOKEN_EXPIRATION_TIME,
+          expiresIn: REFRESH_TOKEN_LIFETIME,
         },
       ),
     ]);
@@ -246,9 +165,61 @@ export class AuthService {
       refresh_token: refresh_token,
     };
   }
+  private async createSession(
+    userId: string,
+    refreshToken: string,
+    loginIp: string,
+    // use ENUM instead
+    role: string,
+  ): Promise<void> {
+    const decodedToken = this.jwtService.decode(refreshToken) as JwtPayload;
+    const issuedAt = this.convertTimestampToDate(decodedToken.iat);
+    const expiresAt = this.convertTimestampToDate(decodedToken.exp);
+    const rtHash = await this.hashToken(refreshToken);
+    await this.prisma.userSession.create({
+      data: {
+        user_id: userId,
+        rt_hash: rtHash,
+        issued_at: issuedAt,
+        expires_at: expiresAt,
+        login_ip_address: loginIp,
+        last_accessed_at: new Date(),
+        role: role,
+      },
+    });
+  }
+  private async updateSessionLastAccessed(sessionId: number): Promise<void> {
+    await this.prisma.userSession.update({
+      where: { id: sessionId },
+      data: {
+        last_accessed_at: new Date(),
+      },
+    });
+  }
+
+  private async deleteSession(sessionId: number): Promise<void> {
+    await this.prisma.userSession.delete({
+      where: { id: sessionId },
+    });
+  }
+
+  private async findSession(userId: string, rtHash: string) {
+    const response = await this.prisma.userSession.findFirst({
+      where: {
+        user_id: userId,
+        rt_hash: rtHash,
+      },
+      include: {
+        user: true,
+      },
+    });
+    console.log(response);
+    return response;
+  }
+
   /* HELPER FUNCTIONS 
-<------------------------------------------------------------------------------------------------------------------------>
-*/
+  <-------------------------------------------------------------------------------------------------------------------->
+  */
   private convertTimestampToDate(timestamp: number) {
     return new Date(timestamp * 1000).toISOString();
   }

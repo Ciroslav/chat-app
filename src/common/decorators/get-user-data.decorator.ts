@@ -1,13 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-type userSessionMetadata =
-  | 'uuid'
-  | 'email'
-  | 'username'
-  | 'role'
-  | 'iat'
-  | 'exp'
-  | 'token';
+type userSessionMetadata = 'uuid' | 'email' | 'username' | 'role' | 'iat' | 'exp' | 'token';
 
 export const GetCurrentUserData = createParamDecorator(
   (data: userSessionMetadata | undefined, context: ExecutionContext) => {

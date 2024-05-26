@@ -8,11 +8,6 @@ import { ServiceLogger } from 'src/common/logger';
 @Module({
   imports: [JwtModule.register({})],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    AccessTokenStrategy,
-    RefreshTokenStrategy,
-    ServiceLogger,
-  ],
+  providers: [AuthService, AccessTokenStrategy, RefreshTokenStrategy, ServiceLogger],
 })
 export class AuthServiceModule {}

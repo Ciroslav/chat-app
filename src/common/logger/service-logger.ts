@@ -12,10 +12,7 @@ export class ServiceLogger implements LoggerService {
   }
 
   error(message: string, trace?: string) {
-    this.logger.error(
-      `\x1b[33m[${this.serviceName}]\x1b[31m ${message}`,
-      trace,
-    );
+    this.logger.error(`\x1b[33m[${this.serviceName}]\x1b[31m ${message}`, trace);
   }
 
   warn(message: string) {

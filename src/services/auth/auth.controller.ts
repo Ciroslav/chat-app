@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  Post,
-  Get,
-  UseGuards,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, Get, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto';
 import { Tokens } from './types';
@@ -28,10 +19,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Login' })
   @ApiBody({ type: LoginDto })
   @HttpCode(HttpStatus.OK)
-  login(
-    @Req() req: Request,
-    @Body(new LoginDtoValidatorPipe()) loginDto: LoginDto,
-  ): Promise<Tokens> {
+  login(@Req() req: Request, @Body(new LoginDtoValidatorPipe()) loginDto: LoginDto): Promise<Tokens> {
     const loginIp = req.socket.remoteAddress;
     return this.authService.login(loginDto, loginIp);
   }
@@ -42,10 +30,7 @@ export class AuthController {
   })
   @Post('/logout')
   @HttpCode(HttpStatus.OK)
-  logout(
-    @GetCurrentUserData('uuid') userId: string,
-    @GetCurrentUserData('token') refreshToken: string,
-  ) {
+  logout(@GetCurrentUserData('uuid') userId: string, @GetCurrentUserData('token') refreshToken: string) {
     return this.authService.logoutOne(userId, refreshToken);
   }
 
@@ -55,10 +40,7 @@ export class AuthController {
   })
   @Post('/logout-all')
   @HttpCode(HttpStatus.OK)
-  logoutAll(
-    @GetCurrentUserData('uuid') userId: string,
-    @GetCurrentUserData('token') refreshToken: string,
-  ) {
+  logoutAll(@GetCurrentUserData('uuid') userId: string, @GetCurrentUserData('token') refreshToken: string) {
     return this.authService.logoutAll(userId, refreshToken);
   }
 
@@ -66,10 +48,7 @@ export class AuthController {
   @Get('/refresh')
   @ApiOperation({ summary: 'Issues new Access token- Use refresh token' })
   @HttpCode(HttpStatus.OK)
-  refreshToken(
-    @GetCurrentUserData('uuid') uuid: string,
-    @GetCurrentUserData('token') refreshToken: string,
-  ) {
+  refreshToken(@GetCurrentUserData('uuid') uuid: string, @GetCurrentUserData('token') refreshToken: string) {
     return this.authService.refreshAccessToken(uuid, refreshToken);
   }
 }

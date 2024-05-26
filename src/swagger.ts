@@ -6,15 +6,15 @@ export enum SwaggerTags {
   Authorization = 'Authorization',
   Users = 'Users',
   Relations = 'Relations',
+  Conversations = 'Conversations',
+  Messages = 'Messages',
 }
 
 export function setupSwagger(app: INestApplication) {
   const config = new DocumentBuilder()
-    .setTitle('User management Service')
-    .setDescription('User management REST API documentation')
+    .setTitle('Chat Application monolith')
+    .setDescription('Chat app REST API doccumentation')
     .setVersion('1.0')
-    .addTag(SwaggerTags.Authorization)
-    .addTag(SwaggerTags.Users)
     .addBearerAuth()
     .build();
 

@@ -35,14 +35,14 @@ export class GetManyUsersDTO {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  size?: number = 10;
+  limit?: number = 10;
 }
 
 export class GetManyUsersUnrestrictedDTO {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MinLength(0)
+  @MinLength(1)
   name: string;
 
   @ApiPropertyOptional()
@@ -57,5 +57,5 @@ export class GetManyUsersUnrestrictedDTO {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  size?: number = 10;
+  limit?: number = 10;
 }

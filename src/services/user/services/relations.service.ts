@@ -278,8 +278,8 @@ export class RelationsService {
   }
 
   async findFriends(params: GetManyUsersDTO, uuid: string) {
-    const skip = (params.page - 1) * params.size || 0;
-    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+    const skip = (params.page - 1) * params.limit || 0;
+    const take = parseInt(params.limit as unknown as string, 10) || 10; //cast param from String to Number
 
     const friends = await this.prisma.friendList.findMany({
       where: {
@@ -323,8 +323,8 @@ export class RelationsService {
   }
 
   async findBlockedUsers(params: GetManyUsersDTO, uuid: string) {
-    const skip = (params.page - 1) * params.size || 0;
-    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+    const skip = (params.page - 1) * params.limit || 0;
+    const take = parseInt(params.limit as unknown as string, 10) || 10; //cast param from String to Number
 
     const blockedUsers = await this.prisma.blockList.findMany({
       where: { user_uuid: uuid },
@@ -359,8 +359,8 @@ export class RelationsService {
   }
 
   async findAllUsersFiltered(params: GetManyUsersDTO, selfUuid: string) {
-    const skip = (params.page - 1) * params.size || 0;
-    const take = parseInt(params.size as unknown as string, 10) || 10; //cast param from String to Number
+    const skip = (params.page - 1) * params.limit || 0;
+    const take = parseInt(params.limit as unknown as string, 10) || 10; //cast param from String to Number
 
     const friends = await this.prisma.friendList.findMany({
       where: {

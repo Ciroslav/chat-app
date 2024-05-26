@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Param,
-  UseGuards,
-  Delete,
-  Get,
-  Query,
-} from '@nestjs/common';
+import { Controller, Post, Param, UseGuards, Delete, Get, Query } from '@nestjs/common';
 import { RelationsService } from './services/relations.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { SwaggerTags } from 'src/swagger';
@@ -16,78 +8,57 @@ import { GetCurrentUserData } from 'src/common/decorators';
 import { GetManyUsersUnrestrictedDTO } from './dto/getUsers.dto';
 
 @ApiTags(SwaggerTags.Relations)
-@Controller('user')
 @ApiBearerAuth()
+@Controller('user')
 export class RelationsController {
   constructor(private readonly relationsService: RelationsService) {}
 
   @UseGuards(AccessGuard)
   @Post('/send-request/:uuid')
   @ApiOperation({ summary: 'Send friend request' })
-  sendRequest(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  sendRequest(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.sendFriendRequest(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Post('/cancel-request/:uuid')
   @ApiOperation({ summary: 'Cancel friend request' })
-  cancelRequest(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  cancelRequest(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.cancelFriendRequest(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Post('/accept-request/:uuid')
   @ApiOperation({ summary: 'Accept friend request' })
-  acceptRequest(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  acceptRequest(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.acceptFriendRequest(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Post('/refuse-request/:uuid')
   @ApiOperation({ summary: 'Refuse friend request' })
-  refuseRequest(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  refuseRequest(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.refuseFriendRequest(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Post('/block-user/:uuid')
   @ApiOperation({ summary: 'Block user' })
-  blockUser(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  blockUser(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.blockUser(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Delete('/remove-friend/:uuid')
   @ApiOperation({ summary: 'Delete friend' })
-  deleteFriend(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  deleteFriend(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.removeFriend(selfUuid, targetUuid);
   }
 
   @UseGuards(AccessGuard)
   @Delete('/unblock-user/:uuid')
   @ApiOperation({ summary: 'Unblock user' })
-  unblockUser(
-    @Param('uuid') targetUuid: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ): Promise<any> {
+  unblockUser(@Param('uuid') targetUuid: string, @GetCurrentUserData('uuid') selfUuid: string): Promise<any> {
     return this.relationsService.unblockUser(selfUuid, targetUuid);
   }
 
@@ -96,23 +67,16 @@ export class RelationsController {
   @ApiOperation({
     summary: 'Search for friends by username / get all if empty string as name',
   })
-  findFriends(
-    @Query() queryParams: GetManyUsersUnrestrictedDTO,
-    @GetCurrentUserData('uuid') uuid: string,
-  ) {
+  findFriends(@Query() queryParams: GetManyUsersUnrestrictedDTO, @GetCurrentUserData('uuid') uuid: string) {
     return this.relationsService.findFriends(queryParams, uuid);
   }
 
   @UseGuards(AccessGuard)
   @Get('/blocked/')
   @ApiOperation({
-    summary:
-      'Search for blocked users by username / get all if empty string as name',
+    summary: 'Search for blocked users by username / get all if empty string as name',
   })
-  findBlocked(
-    @Query() queryParams: GetManyUsersUnrestrictedDTO,
-    @GetCurrentUserData('uuid') uuid: string,
-  ) {
+  findBlocked(@Query() queryParams: GetManyUsersUnrestrictedDTO, @GetCurrentUserData('uuid') uuid: string) {
     return this.relationsService.findBlockedUsers(queryParams, uuid);
   }
 
@@ -139,10 +103,7 @@ export class RelationsController {
   @ApiOperation({
     summary: 'Search for users eligible for friend request',
   })
-  findUsersFiltered(
-    @Query() queryParams: GetManyUsersUnrestrictedDTO,
-    @GetCurrentUserData('uuid') uuid: string,
-  ) {
+  findUsersFiltered(@Query() queryParams: GetManyUsersUnrestrictedDTO, @GetCurrentUserData('uuid') uuid: string) {
     return this.relationsService.findAllUsersFiltered(queryParams, uuid);
   }
 }
