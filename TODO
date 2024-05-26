@@ -15,5 +15,5 @@ Create and use repositories instead of prisma in services
 
 On patch conversation implement logic that will skip adding duplicates (same userId per conversationId)
 
-
+USE JSONB for Author column in messages
 

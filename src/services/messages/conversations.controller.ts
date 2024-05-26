@@ -15,6 +15,9 @@ import { SwaggerTags } from 'src/swagger';
 import { GetCurrentUserData } from 'src/common/decorators';
 import { AccessGuard } from 'src/common/guards';
 import { UpdateConversationDto } from './dto/update-conversation.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { MessagesService } from './services/messages.service';
+import { UpdateMessageDto } from './dto/update-message.dto';
 
 @ApiTags(SwaggerTags.Conversations)
 @ApiBearerAuth()
@@ -68,5 +71,72 @@ export class ConversationsController {
     @GetCurrentUserData('uuid') selfUuid: string,
   ) {
     return this.conversationsService.remove(+id, selfUuid);
+  }
+}
+
+@ApiTags(SwaggerTags.Messages)
+@ApiBearerAuth()
+@Controller('conversations/:conversationId/messages')
+export class MessagesController {
+  constructor(private readonly messagesService: MessagesService) {}
+
+  @UseGuards(AccessGuard)
+  @Post('/')
+  @ApiOperation({ summary: 'Create message' })
+  @ApiBody({ type: CreateMessageDto })
+  create(
+    @Param('conversationId') conversationId: string,
+    @Body() createMessageDto: CreateMessageDto,
+    @GetCurrentUserData('uuid') selfUuid: string,
+  ) {
+    return this.messagesService.create(
+      createMessageDto,
+      +conversationId,
+      selfUuid,
+    );
+  }
+
+  //TODO add search params
+  // @UseGuards(AccessGuard)
+  // @ApiOperation({ summary: 'Find all user conversations' })
+  // @Get()
+  // findAll(@GetCurrentUserData('uuid') selfUuid: string) {
+  //   return this.messagesService.findAll(selfUuid);
+  // }
+
+  // @UseGuards(AccessGuard)
+  // @Get('/conversations/:conversationId/messages/:messageId')
+  // findOne(
+  //   @Param('messageId') messageId: string,
+  //   @Param('conversationId') conversationId: string,
+  //   @GetCurrentUserData('uuid') selfUuid: string,
+  // ) {
+  //   return this.messagesService.findOne(+conversationId, +messageId, selfUuid);
+  // }
+  @UseGuards(AccessGuard)
+  @Patch('/:messageId')
+  @ApiOperation({ summary: 'Edit message' })
+  update(
+    @Param('messageId') messageId: string,
+    @Param('conversationId') conversationId: string,
+    @Body() updateConversationDto: UpdateMessageDto,
+    @GetCurrentUserData('uuid') selfUuid: string,
+  ) {
+    return this.messagesService.update(
+      updateConversationDto,
+      +conversationId,
+      +messageId,
+      selfUuid,
+    );
+  }
+  @UseGuards(AccessGuard)
+  @Delete('/:messageId')
+  @ApiOperation({ summary: 'Delete message' })
+  remove(
+    @Param('messageId') messageId: string,
+    @Param('conversationId') conversationId: string,
+    @GetCurrentUserData('uuid') selfUuid: string,
+  ) {
+    return this.messagesService.remove(+conversationId, +messageId, selfUuid);
   }
 }

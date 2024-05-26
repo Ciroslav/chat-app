@@ -7,6 +7,7 @@ export enum SwaggerTags {
   Users = 'Users',
   Relations = 'Relations',
   Conversations = 'Conversations',
+  Messages = 'Messages'
 }
 
 export function setupSwagger(app: INestApplication) {

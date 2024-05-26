@@ -60,7 +60,7 @@ export class ConversationsService {
       select: {
         id: true,
         created_at: true,
-        participants: {
+        conversations_users: {
           select: { user: true, joined_at: true, left_at: true },
         },
       },
