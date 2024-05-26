@@ -10,38 +10,41 @@ datasource db {
 }
 
 model User {
-  id             Int          @id @default(autoincrement())
-  uuid           String       @unique
-  username       String       @unique
-  email          String       @unique
-  country        String?
-  address        String?
-  phone_number   String?
-  password_hash  String
-  created_at     DateTime     @default(now())
-  updated_at     DateTime     @updatedAt
-  last_active_at DateTime?
-  status         String       @default("ACTIVE")
-  role           String       @default("USER")
-  blockedList    BlockList[]  @relation("BlockedUser")
-  blockedList2   BlockList[]  @relation("BlockingUser")
-  friendList1    FriendList[] @relation("FriendListUser1")
-  friendList2    FriendList[] @relation("FriendListUser2")
-  sessions       Session[]
+  id                 Int          @id @default(autoincrement())
+  uuid               String       @unique
+  username           String       @unique
+  preferred_username String?
+  email              String       @unique
+  country            String?
+  address            String?
+  phone_number       String?
+  password_hash      String
+  created_at         DateTime     @default(now())
+  updated_at         DateTime     @updatedAt
+  last_active_at     DateTime?
+  status             String       @default("ACTIVE")
+  role               String       @default("USER")
+  blockedList        BlockList[]  @relation("BlockedUser")
+  blockedList2       BlockList[]  @relation("BlockingUser")
+  friendList1        FriendList[] @relation("FriendListUser1")
+  friendList2        FriendList[] @relation("FriendListUser2")
+  sessions           Session[]
 
   @@map("users")
   @@schema("user_management")
 }
 
 model Session {
-  id               Int       @id @default(autoincrement())
-  uuid             String    @unique
-  issued_at        DateTime
-  expires_at       DateTime
-  login_ip_address String?
-  rt_hash          String?
-  role             String
-  user_id          String
+  id                 Int      @id @default(autoincrement())
+  user_id            String
+  username           String
+  issued_at          DateTime
+  expires_at         DateTime
+  login_ip_address   String?
+  rt_hash            String?
+  role               String
+  preferred_username String?
+
   created_at       DateTime  @default(now())
   last_accessed_at DateTime?
   user             User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)

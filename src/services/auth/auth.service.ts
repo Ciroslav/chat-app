@@ -3,7 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto';
 import { compare } from 'bcrypt';
 import { createHash } from 'crypto';
-import { v4 as uuid4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, Tokens, JwtSecrets } from './types';
 import { ServiceLogger } from 'src/common/logger';
@@ -63,13 +62,16 @@ export class AuthService {
     }
     const tokens = await this.issueTokens(
       user.uuid,
-      user.email,
       user.username,
+      user.preferredUsername,
+      user.email,
       user.role,
     );
 
     await this.createSession(
       user.uuid,
+      user.username,
+      user.preferredUsername,
       tokens.refresh_token,
       loginIp,
       user.role,
@@ -124,22 +126,26 @@ export class AuthService {
     this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
     return { message: `Number of sessions invalidated: ${data.count}` };
   }
-  async createSession(
+  private async createSession(
     userId: string,
+    username: string,
+    preferedUsername: string = username,
     refreshToken: string,
     loginIp: string,
     // use ENUM instead
     role: string,
   ): Promise<void> {
     const decodedToken = this.jwtService.decode(refreshToken) as JwtPayload;
+    console.log('AAA', decodedToken);
     const issuedAt = this.convertTimestampToDate(decodedToken.iat);
     const expiresAt = this.convertTimestampToDate(decodedToken.exp);
     const rtHash = await this.hashToken(refreshToken);
     await this.prisma.session.create({
       data: {
         user_id: userId,
+        username: username,
+        preferred_username: preferedUsername,
         rt_hash: rtHash,
-        uuid: uuid4(),
         issued_at: issuedAt,
         expires_at: expiresAt,
         login_ip_address: loginIp,
@@ -149,7 +155,7 @@ export class AuthService {
     });
   }
 
-  async updateSessionLastAccessed(sessionId: number): Promise<void> {
+  private async updateSessionLastAccessed(sessionId: number): Promise<void> {
     await this.prisma.session.update({
       where: { id: sessionId },
       data: {
@@ -197,8 +203,9 @@ export class AuthService {
 
     const { access_token } = await this.issueTokens(
       userId,
-      session.user.email,
       session.user.username,
+      session.preferedUsername,
+      session.user.email,
       session.user.role,
     );
 
@@ -209,10 +216,11 @@ export class AuthService {
   }
 
   //Generate new Pair of Refresh/Access Token
-  async issueTokens(
+  private async issueTokens(
     userId: string,
-    email: string,
     username: string,
+    preferredUsername: string = username,
+    email: string,
     role: string,
   ): Promise<Tokens> {
     const [access_token, refresh_token] = await Promise.all([
@@ -220,6 +228,7 @@ export class AuthService {
         {
           uuid: userId,
           username: username,
+          preferredUsername: preferredUsername,
           email,
           role,
         },
@@ -232,6 +241,7 @@ export class AuthService {
         {
           uuid: userId,
           username: username,
+          preferredUsername: preferredUsername,
           email,
           role,
         },

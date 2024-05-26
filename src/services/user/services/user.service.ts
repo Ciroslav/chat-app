@@ -32,6 +32,7 @@ export class UserService {
           uuid: uuid4(),
           email: signupDto.email,
           username: signupDto.username,
+          preferred_username: signupDto.preferredUsername,
           password_hash: hash,
           country: signupDto.country,
           address: signupDto.address,
@@ -74,6 +75,7 @@ export class UserService {
         data: {
           email: updateUserDto.email,
           username: updateUserDto.username,
+          preferred_username: updateUserDto.preferredUsername,
           country: updateUserDto.country,
           address: updateUserDto.address,
           phone_number: updateUserDto.phoneNumber,

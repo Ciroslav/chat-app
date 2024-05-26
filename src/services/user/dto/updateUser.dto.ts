@@ -19,6 +19,10 @@ export class UpdateUserDTO {
   @ApiProperty()
   @IsOptional()
   @IsString()
+  preferredUsername?: string;
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
   country?: string;
   @ApiProperty()
   @IsOptional()
