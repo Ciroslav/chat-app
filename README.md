@@ -32,4 +32,16 @@ $ npm run start
 
 # watch mode
 $ npm run start:dev
+```
+
+### WSL local development - websocket
+```bash
+# To circumvent issues with having websocket served on WSL machine while accessing it in Windows (e.g. through Postman) do following
+
+#On WSL
+$ sudo ip addr add 192.168.99.2/24 broadcast 192.168.99.255 dev eth0 label eth0:1
+# On windows with admin privilege
+$ netsh interface ip add address "vEthernet (WSL)" 192.168.99.1 255.255.255.0
+# Proceed to connect with 192.168.99.2
+```
 
