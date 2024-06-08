@@ -5,6 +5,7 @@ import { UserServiceModule } from './services/user/user.module';
 import { MessagesModule } from './services/messages/messages.module';
 import { GatewayModule } from './services/gateway/gateway.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { StorageModule } from './services/storage/storage.module';
 import configuration from './configuration';
 
 @Module({
@@ -15,6 +16,7 @@ import configuration from './configuration';
     AuthServiceModule,
     MessagesModule,
     GatewayModule,
+    StorageModule,
   ],
 })
 export class AppModule {}
