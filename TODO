@@ -1,6 +1,7 @@
 FEATURE:
 Create Gateway for websocket communication
 ->
+User activity metadata? -separate table with relation to uuid
 Track online status
 
 access_since - map Date correctly when sending data from client to database
@@ -18,7 +19,7 @@ REFACTOR:
 
 Refactor logger, accept two params, message and object (to be stringified)
 
-Refactor relationships - use relationship type
+Refactor relationships - use relationship type, less endpoints
 
 Create and use repositories instead of prisma in services
 
