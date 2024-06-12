@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { setupSwagger } from './swagger';
 
 async function bootstrap() {
@@ -9,7 +9,9 @@ async function bootstrap() {
   app.enableCors({
     origin: '*',
   });
-  app.setGlobalPrefix(globalPrefix);
+  app.setGlobalPrefix(globalPrefix, {
+    exclude: [{ path: '/assets/:conversationId/:filename', method: RequestMethod.GET }],
+  });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   setupSwagger(app);
   await app.listen(3000);
