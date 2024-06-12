@@ -10,7 +10,10 @@ async function bootstrap() {
     origin: '*',
   });
   app.setGlobalPrefix(globalPrefix, {
-    exclude: [{ path: '/assets/:conversationId/:filename', method: RequestMethod.GET }],
+    exclude: [
+      { path: '/assets/media/:conversationId/:filename', method: RequestMethod.GET },
+      { path: '/assets/avatar/:userId', method: RequestMethod.GET },
+    ],
   });
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   setupSwagger(app);
