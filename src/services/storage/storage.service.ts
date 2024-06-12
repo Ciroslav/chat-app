@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { join, normalize } from 'path';
 import { promises as fs } from 'fs';
 import { STORAGE_ABSOLUTE_PATH } from 'src/contants';
+import * as mime from 'mime-types';
 
 @Injectable()
 export class StorageService {
@@ -12,10 +13,12 @@ export class StorageService {
     await fs.writeFile(filePath, data);
   }
 
-  async getFile(filename: string): Promise<Buffer> {
+  async getFile(filename: string): Promise<{ buffer: Buffer; mimeType: string }> {
     const filePath = this.sanitizePath(this.storagePath, filename);
     try {
-      return await fs.readFile(filePath);
+      const buffer = await fs.readFile(filePath);
+      const mimeType = mime.lookup(filePath);
+      return { buffer, mimeType };
     } catch (error) {
       throw new NotFoundException('File not found');
     }

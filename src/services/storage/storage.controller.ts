@@ -8,7 +8,6 @@ import {
   UseInterceptors,
   NotFoundException,
   Res,
-  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { StorageService } from './storage.service';
@@ -39,17 +38,15 @@ export class StorageController {
     if (!file) {
       throw new NotFoundException('File not found in request');
     }
-
-    console.log('AAAA', file); // Log the file object to check its properties
-
     await this.storageService.saveFile(file.originalname, file.buffer);
     return { message: 'File uploaded successfully' };
   }
   @Get(':filename')
   async getFile(@Param('filename') filename: string, @Res() res: Response) {
     try {
-      const file = await this.storageService.getFile(filename);
-      res.send(file);
+      const { buffer, mimeType } = await this.storageService.getFile(filename);
+      res.setHeader('Content-Type', mimeType);
+      res.send(buffer);
     } catch (error) {
       throw new NotFoundException('File not found');
     }
