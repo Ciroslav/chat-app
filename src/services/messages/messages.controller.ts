@@ -10,6 +10,7 @@ import { CreateMessageDto } from './dto/create-message.dto';
 import { MessagesService } from './services/messages.service';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { GetMessagesDTO } from './dto/get-messages.dto';
+import { ConversationParticipantGuard } from 'src/common/guards/conversation-participant.guard';
 
 @ApiTags(SwaggerTags.Conversations)
 @ApiBearerAuth()
@@ -32,19 +33,18 @@ export class ConversationsController {
     return this.conversationsService.findAll(selfUuid);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Get('/:conversationId')
-  findOne(@Param('conversationId') conversationId: string, @GetCurrentUserData('uuid') selfUuid: string) {
-    return this.conversationsService.findOne(+conversationId, selfUuid);
+  findOne(@Param('conversationId') conversationId: string) {
+    return this.conversationsService.findOne(+conversationId);
   }
+
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Patch('/:conversationId')
-  updateConversation(
-    @Param('conversationId') id: string,
-    @Body() updateConversationDto: UpdateConversationDto,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.conversationsService.addParticipants(+id, updateConversationDto, selfUuid);
+  updateConversation(@Param('conversationId') id: string, @Body() updateConversationDto: UpdateConversationDto) {
+    return this.conversationsService.addParticipants(+id, updateConversationDto);
   }
   @UseGuards(AccessGuard)
   @Delete('/:conversationId')
@@ -59,6 +59,7 @@ export class ConversationsController {
 export class MessagesController {
   constructor(private readonly messagesService: MessagesService) {}
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Post('/messages')
   @ApiBody({ type: CreateMessageDto })
@@ -71,17 +72,15 @@ export class MessagesController {
     return this.messagesService.createMessage(createMessageDto, +conversationId, selfUuid);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Get('/messages')
   @ApiOperation({ summary: 'Display messages, use before for lazy loading, use around to jump to message' })
-  findOne(
-    @Query() queryParams: GetMessagesDTO,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.messagesService.getMessages(+conversationId, queryParams, selfUuid);
+  findOne(@Query() queryParams: GetMessagesDTO, @Param('conversationId') conversationId: string) {
+    return this.messagesService.getMessages(+conversationId, queryParams);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Patch('/messages/:messageId')
   @ApiBody({ type: UpdateMessageDto })
@@ -94,6 +93,7 @@ export class MessagesController {
   ) {
     return this.messagesService.updateMessage(updateConversationDto, +conversationId, +messageId, selfUuid);
   }
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Delete('/:messageId')
   @ApiOperation({ summary: 'Delete message' })
@@ -105,32 +105,27 @@ export class MessagesController {
     return this.messagesService.deleteMessage(+conversationId, +messageId, selfUuid);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @ApiOperation({ summary: 'Find all pins' })
   @Get('/pins')
-  findAll(@GetCurrentUserData('uuid') selfUuid: string, @Param('conversationId') conversationId: string) {
-    return this.messagesService.findAllPins(+conversationId, selfUuid);
+  findAll(@Param('conversationId') conversationId: string) {
+    return this.messagesService.findAllPins(+conversationId);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Patch('/pins/:messageId')
   @ApiOperation({ summary: 'Pin message' })
-  pinMessage(
-    @Param('messageId') messageId: string,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.messagesService.pinMessage(+conversationId, +messageId, selfUuid);
+  pinMessage(@Param('messageId') messageId: string, @Param('conversationId') conversationId: string) {
+    return this.messagesService.pinMessage(+conversationId, +messageId);
   }
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Delete('pins/:messageId/')
   @ApiOperation({ summary: 'Unpin message' })
-  unpinMessage(
-    @Param('messageId') messageId: string,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.messagesService.unpinMessage(+conversationId, +messageId, selfUuid);
+  unpinMessage(@Param('messageId') messageId: string, @Param('conversationId') conversationId: string) {
+    return this.messagesService.unpinMessage(+conversationId, +messageId);
   }
 }

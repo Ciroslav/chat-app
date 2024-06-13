@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -36,11 +36,7 @@ export class ConversationsService {
     });
   }
 
-  async findOne(conversationId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
+  async findOne(conversationId: number) {
     return await this.prisma.conversation.findMany({
       where: { id: conversationId },
       select: {
@@ -54,11 +50,7 @@ export class ConversationsService {
   }
 
   //TODO IMPLEMENT LOGIC FOR SKIPPING DUPLICATES
-  async addParticipants(conversationId: number, updateConversationDto: UpdateConversationDto, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
+  async addParticipants(conversationId: number, updateConversationDto: UpdateConversationDto) {
     const { participants, limitedAccess, accessSince } = updateConversationDto;
 
     const prismaPayload = [];
@@ -87,12 +79,5 @@ export class ConversationsService {
       throw new NotFoundException('Conversation not found.');
     }
     return { success: true };
-  }
-
-  private async isChatParticipant(conversationId: number, selfUuid) {
-    const response = await this.prisma.conversationParticipants.count({
-      where: { conversation_id: conversationId, user: selfUuid },
-    });
-    return !(response === 0);
   }
 }

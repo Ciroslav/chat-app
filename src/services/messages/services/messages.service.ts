@@ -17,12 +17,8 @@ export class MessagesService {
 
   //TODO Add mapper
   async createMessage(createMessageDto: CreateMessageDto, conversationId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     const { content, attachmentUrl } = createMessageDto;
-    await this.prisma.message.create({
+    return await this.prisma.message.create({
       data: {
         author: selfUuid,
         content: content,
@@ -33,25 +29,25 @@ export class MessagesService {
   }
 
   async updateMessage(updateMessageDto: UpdateMessageDto, conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     const { content } = updateMessageDto;
-    await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        author: selfUuid,
-        content: content,
-      },
-    });
+    try {
+      return await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          author: selfUuid,
+          content: content,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new ForbiddenException();
+      }
+      //TODO LOGGER
+      console.log(error);
+    }
   }
 
-  async getMessages(conversationId: number, queryParams: GetMessagesDTO, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
+  async getMessages(conversationId: number, queryParams: GetMessagesDTO) {
     if (queryParams.before) {
       return this.getMessagesBefore(conversationId, queryParams.before, queryParams.limit);
     }
@@ -62,55 +58,63 @@ export class MessagesService {
   }
 
   async deleteMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: {
+          author: selfUuid,
+          content: MESSAGE_DELETED,
+          attachment_url: null,
+          deleted: true,
+          conversation_id: conversationId,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new ForbiddenException();
+      }
+      //TODO LOGGER
+      console.log(error);
     }
-    await this.prisma.message.update({
-      where: { id: messageId },
-      data: {
-        author: selfUuid,
-        content: MESSAGE_DELETED,
-        attachment_url: null,
-        deleted: true,
-        conversation_id: conversationId,
-      },
-    });
   }
-  async pinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
+  async pinMessage(conversationId: number, messageId: number) {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          pinned: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      //TODO LOGGER
+      console.log(error);
     }
-    await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        pinned: true,
-      },
-    });
   }
 
-  async findAllPins(conversationId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
+  async findAllPins(conversationId: number) {
     return await this.prisma.message.findMany({
       where: { pinned: true, conversation_id: conversationId },
     });
   }
 
-  async unpinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
+  async unpinMessage(conversationId: number, messageId: number) {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          pinned: false,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      //TODO LOGGER
+      console.log(error);
     }
-    await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        pinned: false,
-      },
-    });
   }
 
   private async getMessagesBefore(conversationId: number, messageId: number, limit: number) {
@@ -184,12 +188,5 @@ export class MessagesService {
       take: limit,
     });
     return messages.reverse();
-  }
-
-  private async isChatParticipant(conversationId: number, selfUuid) {
-    const response = await this.prisma.conversationParticipants.count({
-      where: { conversation_id: conversationId, user: selfUuid },
-    });
-    return !(response === 0);
   }
 }

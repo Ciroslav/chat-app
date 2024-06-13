@@ -20,6 +20,7 @@ import * as multer from 'multer';
 import { fileUploadSchema } from './schemas/file-upload.schema';
 import { AccessGuard } from 'src/common/guards';
 import { GetCurrentUserData } from 'src/common/decorators';
+import { ConversationParticipantGuard } from 'src/common/guards/conversation-participant.guard';
 
 @ApiTags(SwaggerTags.Storage)
 @ApiBearerAuth()
@@ -27,6 +28,7 @@ import { GetCurrentUserData } from 'src/common/decorators';
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Post('/media/:conversationId')
   @ApiOperation({ summary: 'Upload a file' })
@@ -59,6 +61,8 @@ export class StorageController {
     }
   }
 
+  //FIX: POSSIBLY REDUNDANT? Should be private method that deletes attachments through message interface?
+  @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Delete('/media/:conversationId/:filename')
   async deleteMedia(@Param('conversationId') conversationId: string, @Param('filename') filename: string) {
