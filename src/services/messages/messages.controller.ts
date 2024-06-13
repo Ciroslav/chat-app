@@ -85,7 +85,7 @@ export class MessagesController {
     @Param('conversationId') conversationId: string,
     @GetCurrentUserData('uuid') selfUuid: string,
   ) {
-    return this.messagesService.getMessages(+conversationId, queryParams, selfUuid);
+    return this.messagesService.getMessages(+conversationId, queryParams);
   }
 
   @UseGuards(ConversationParticipantGuard)
@@ -117,31 +117,23 @@ export class MessagesController {
   @UseGuards(AccessGuard)
   @ApiOperation({ summary: 'Find all pins' })
   @Get('/pins')
-  findAll(@GetCurrentUserData('uuid') selfUuid: string, @Param('conversationId') conversationId: string) {
-    return this.messagesService.findAllPins(+conversationId, selfUuid);
+  findAll(@Param('conversationId') conversationId: string) {
+    return this.messagesService.findAllPins(+conversationId);
   }
 
   @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Patch('/pins/:messageId')
   @ApiOperation({ summary: 'Pin message' })
-  pinMessage(
-    @Param('messageId') messageId: string,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.messagesService.pinMessage(+conversationId, +messageId, selfUuid);
+  pinMessage(@Param('messageId') messageId: string, @Param('conversationId') conversationId: string) {
+    return this.messagesService.pinMessage(+conversationId, +messageId);
   }
 
   @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Delete('pins/:messageId/')
   @ApiOperation({ summary: 'Unpin message' })
-  unpinMessage(
-    @Param('messageId') messageId: string,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.messagesService.unpinMessage(+conversationId, +messageId, selfUuid);
+  unpinMessage(@Param('messageId') messageId: string, @Param('conversationId') conversationId: string) {
+    return this.messagesService.unpinMessage(+conversationId, +messageId);
   }
 }

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -30,16 +30,24 @@ export class MessagesService {
 
   async updateMessage(updateMessageDto: UpdateMessageDto, conversationId: number, messageId: number, selfUuid: string) {
     const { content } = updateMessageDto;
-    return await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        author: selfUuid,
-        content: content,
-      },
-    });
+    try {
+      return await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          author: selfUuid,
+          content: content,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new ForbiddenException();
+      }
+      //TODO LOGGER
+      console.log(error);
+    }
   }
 
-  async getMessages(conversationId: number, queryParams: GetMessagesDTO, selfUuid: string) {
+  async getMessages(conversationId: number, queryParams: GetMessagesDTO) {
     if (queryParams.before) {
       return this.getMessagesBefore(conversationId, queryParams.before, queryParams.limit);
     }
@@ -50,39 +58,63 @@ export class MessagesService {
   }
 
   async deleteMessage(conversationId: number, messageId: number, selfUuid: string) {
-    await this.prisma.message.update({
-      where: { id: messageId },
-      data: {
-        author: selfUuid,
-        content: MESSAGE_DELETED,
-        attachment_url: null,
-        deleted: true,
-        conversation_id: conversationId,
-      },
-    });
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: {
+          author: selfUuid,
+          content: MESSAGE_DELETED,
+          attachment_url: null,
+          deleted: true,
+          conversation_id: conversationId,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new ForbiddenException();
+      }
+      //TODO LOGGER
+      console.log(error);
+    }
   }
-  async pinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        pinned: true,
-      },
-    });
+  async pinMessage(conversationId: number, messageId: number) {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          pinned: true,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      //TODO LOGGER
+      console.log(error);
+    }
   }
 
-  async findAllPins(conversationId: number, selfUuid: string) {
+  async findAllPins(conversationId: number) {
     return await this.prisma.message.findMany({
       where: { pinned: true, conversation_id: conversationId },
     });
   }
 
-  async unpinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    await this.prisma.message.update({
-      where: { id: messageId, conversation_id: conversationId },
-      data: {
-        pinned: false,
-      },
-    });
+  async unpinMessage(conversationId: number, messageId: number) {
+    try {
+      await this.prisma.message.update({
+        where: { id: messageId, conversation_id: conversationId },
+        data: {
+          pinned: false,
+        },
+      });
+    } catch (error) {
+      if (error.code === 'P2025') {
+        throw new NotFoundException();
+      }
+      //TODO LOGGER
+      console.log(error);
+    }
   }
 
   private async getMessagesBefore(conversationId: number, messageId: number, limit: number) {
