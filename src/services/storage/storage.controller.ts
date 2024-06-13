@@ -27,6 +27,7 @@ import { GetCurrentUserData } from 'src/common/decorators';
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
+  @UseGuards(AccessGuard)
   @Post('/media/:conversationId')
   @ApiOperation({ summary: 'Upload a file' })
   @ApiConsumes('multipart/form-data')
@@ -58,6 +59,7 @@ export class StorageController {
     }
   }
 
+  @UseGuards(AccessGuard)
   @Delete('/media/:conversationId/:filename')
   async deleteMedia(@Param('conversationId') conversationId: string, @Param('filename') filename: string) {
     await this.storageService.deleteMedia(conversationId, filename);
