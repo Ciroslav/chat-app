@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -17,12 +17,8 @@ export class MessagesService {
 
   //TODO Add mapper
   async createMessage(createMessageDto: CreateMessageDto, conversationId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     const { content, attachmentUrl } = createMessageDto;
-    await this.prisma.message.create({
+    return await this.prisma.message.create({
       data: {
         author: selfUuid,
         content: content,
@@ -33,12 +29,8 @@ export class MessagesService {
   }
 
   async updateMessage(updateMessageDto: UpdateMessageDto, conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     const { content } = updateMessageDto;
-    await this.prisma.message.update({
+    return await this.prisma.message.update({
       where: { id: messageId, conversation_id: conversationId },
       data: {
         author: selfUuid,
@@ -48,10 +40,6 @@ export class MessagesService {
   }
 
   async getMessages(conversationId: number, queryParams: GetMessagesDTO, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     if (queryParams.before) {
       return this.getMessagesBefore(conversationId, queryParams.before, queryParams.limit);
     }
@@ -62,10 +50,6 @@ export class MessagesService {
   }
 
   async deleteMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     await this.prisma.message.update({
       where: { id: messageId },
       data: {
@@ -78,10 +62,6 @@ export class MessagesService {
     });
   }
   async pinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     await this.prisma.message.update({
       where: { id: messageId, conversation_id: conversationId },
       data: {
@@ -91,20 +71,12 @@ export class MessagesService {
   }
 
   async findAllPins(conversationId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     return await this.prisma.message.findMany({
       where: { pinned: true, conversation_id: conversationId },
     });
   }
 
   async unpinMessage(conversationId: number, messageId: number, selfUuid: string) {
-    const chatParticipant = await this.isChatParticipant(conversationId, selfUuid);
-    if (!chatParticipant) {
-      throw new ForbiddenException('Not participant of this chat');
-    }
     await this.prisma.message.update({
       where: { id: messageId, conversation_id: conversationId },
       data: {
@@ -184,12 +156,5 @@ export class MessagesService {
       take: limit,
     });
     return messages.reverse();
-  }
-
-  private async isChatParticipant(conversationId: number, selfUuid) {
-    const response = await this.prisma.conversationParticipants.count({
-      where: { conversation_id: conversationId, user: selfUuid },
-    });
-    return !(response === 0);
   }
 }
