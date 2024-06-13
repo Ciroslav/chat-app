@@ -14,7 +14,7 @@ import {
 class PrivateConversationConstraint implements ValidatorConstraintInterface {
   validate(participants: string[], args: ValidationArguments) {
     const dto = args.object as CreateConversationDto;
-    if (!dto.publicChat && participants.length == 1) {
+    if (!dto.publicChat && participants.length != 1) {
       return false;
     }
     return true;
