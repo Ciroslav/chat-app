@@ -95,7 +95,7 @@ export class MessagesService {
     if (!chatParticipant) {
       throw new ForbiddenException('Not participant of this chat');
     }
-    await this.prisma.message.findMany({
+    return await this.prisma.message.findMany({
       where: { pinned: true, conversation_id: conversationId },
     });
   }
