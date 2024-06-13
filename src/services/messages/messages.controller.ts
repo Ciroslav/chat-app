@@ -36,19 +36,15 @@ export class ConversationsController {
   @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Get('/:conversationId')
-  findOne(@Param('conversationId') conversationId: string, @GetCurrentUserData('uuid') selfUuid: string) {
-    return this.conversationsService.findOne(+conversationId, selfUuid);
+  findOne(@Param('conversationId') conversationId: string) {
+    return this.conversationsService.findOne(+conversationId);
   }
 
   @UseGuards(ConversationParticipantGuard)
   @UseGuards(AccessGuard)
   @Patch('/:conversationId')
-  updateConversation(
-    @Param('conversationId') id: string,
-    @Body() updateConversationDto: UpdateConversationDto,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
-    return this.conversationsService.addParticipants(+id, updateConversationDto, selfUuid);
+  updateConversation(@Param('conversationId') id: string, @Body() updateConversationDto: UpdateConversationDto) {
+    return this.conversationsService.addParticipants(+id, updateConversationDto);
   }
   @UseGuards(AccessGuard)
   @Delete('/:conversationId')
@@ -80,11 +76,7 @@ export class MessagesController {
   @UseGuards(AccessGuard)
   @Get('/messages')
   @ApiOperation({ summary: 'Display messages, use before for lazy loading, use around to jump to message' })
-  findOne(
-    @Query() queryParams: GetMessagesDTO,
-    @Param('conversationId') conversationId: string,
-    @GetCurrentUserData('uuid') selfUuid: string,
-  ) {
+  findOne(@Query() queryParams: GetMessagesDTO, @Param('conversationId') conversationId: string) {
     return this.messagesService.getMessages(+conversationId, queryParams);
   }
 

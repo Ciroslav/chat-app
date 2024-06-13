@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -36,7 +36,7 @@ export class ConversationsService {
     });
   }
 
-  async findOne(conversationId: number, selfUuid: string) {
+  async findOne(conversationId: number) {
     return await this.prisma.conversation.findMany({
       where: { id: conversationId },
       select: {
@@ -50,7 +50,7 @@ export class ConversationsService {
   }
 
   //TODO IMPLEMENT LOGIC FOR SKIPPING DUPLICATES
-  async addParticipants(conversationId: number, updateConversationDto: UpdateConversationDto, selfUuid: string) {
+  async addParticipants(conversationId: number, updateConversationDto: UpdateConversationDto) {
     const { participants, limitedAccess, accessSince } = updateConversationDto;
 
     const prismaPayload = [];
