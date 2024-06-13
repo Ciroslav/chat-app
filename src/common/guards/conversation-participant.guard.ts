@@ -16,13 +16,12 @@ export class ConversationParticipantGuard implements CanActivate {
     const userId = decodedToken.uuid;
 
     const conversationId = Number(this.getConversationId(request));
-
     const isAllowed = await this.isChatParticipant(conversationId, userId);
     return isAllowed;
   }
 
   private getConversationId(request: any): string | undefined {
-    const conversationId = request.params.conversatioId;
+    const conversationId = request.params.conversationId;
     return conversationId;
   }
   private async isChatParticipant(conversationId: number, userId: string) {
