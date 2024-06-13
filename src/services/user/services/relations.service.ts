@@ -148,6 +148,7 @@ export class RelationsService {
         select: {
           uuid: true,
           username: true,
+          preferred_username: true,
           email: true,
           country: true,
           address: true,
@@ -184,6 +185,7 @@ export class RelationsService {
         select: {
           uuid: true,
           username: true,
+          preferred_username: true,
           email: true,
           country: true,
           address: true,
@@ -308,6 +310,7 @@ export class RelationsService {
       select: {
         uuid: true,
         username: true,
+        preferred_username: true,
         email: true,
         country: true,
         address: true,
@@ -345,6 +348,7 @@ export class RelationsService {
       select: {
         uuid: true,
         username: true,
+        preferred_username: true,
         email: true,
         country: true,
         address: true,
@@ -402,6 +406,7 @@ export class RelationsService {
       select: {
         uuid: true,
         username: true,
+        preferred_username: true,
         email: true,
         country: true,
         address: true,

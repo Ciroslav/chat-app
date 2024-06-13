@@ -38,6 +38,7 @@ export class UserService {
         select: {
           uuid: true,
           username: true,
+          preferred_username: true,
           email: true,
           country: true,
           address: true,
@@ -74,6 +75,7 @@ export class UserService {
         select: {
           uuid: true,
           username: true,
+          preferred_username: true,
           email: true,
           country: true,
           address: true,
@@ -124,6 +126,7 @@ export class UserService {
       select: {
         uuid: true,
         username: true,
+        preferred_username: true,
         email: true,
         country: true,
         address: true,
@@ -146,6 +149,7 @@ export class UserService {
       select: {
         uuid: true,
         username: true,
+        preferred_username: true,
         email: true,
         country: true,
         address: true,
