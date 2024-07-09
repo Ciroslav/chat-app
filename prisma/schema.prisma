@@ -36,7 +36,7 @@ model User {
 
 model UserSession {
   id             Int       @id @default(autoincrement())
-  user_id        String
+  userId         String    @map("user_id")
   issuedAt       DateTime  @map("issued_at")
   expiresAt      DateTime  @map("expires_at")
   loginIpAddress String?   @map("login_ip_address")
@@ -44,7 +44,7 @@ model UserSession {
   role           String
   createdAt      DateTime  @default(now()) @map("created_at")
   lastAccessedAt DateTime? @map("last_accessed_at")
-  user           User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
   @@schema("user_management")
