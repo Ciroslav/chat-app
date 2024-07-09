@@ -13,15 +13,15 @@ model User {
   id                 Int           @id @default(autoincrement())
   uuid               String        @unique
   username           String        @unique
-  preferred_username String?
+  preferred_username String?       @map("preferredUsername")
   email              String        @unique
   country            String?
   address            String?
-  phone_number       String?
-  password_hash      String
-  created_at         DateTime      @default(now())
-  updated_at         DateTime      @updatedAt
-  last_active_at     DateTime?
+  phone_number       String?       @map("phoneNumer")
+  password_hash      String        @map("passwordHash")
+  created_at         DateTime      @default(now()) @map("createdAt")
+  updated_at         DateTime      @updatedAt @map("updatedAt")
+  last_active_at     DateTime?     @map("lastActiveAt")
   status             String        @default("ACTIVE")
   role               String        @default("USER")
   blockedList        BlockList[]   @relation("BlockedUser")
@@ -37,13 +37,13 @@ model User {
 model UserSession {
   id               Int       @id @default(autoincrement())
   user_id          String
-  issued_at        DateTime
-  expires_at       DateTime
-  login_ip_address String?
-  rt_hash          String?
+  issued_at        DateTime  @map("issuedAt")
+  expires_at       DateTime  @map("expiresAt")
+  login_ip_address String?   @map("loginIpAddress")
+  rt_hash          String?   @map("rtHash")
   role             String
-  created_at       DateTime  @default(now())
-  last_accessed_at DateTime?
+  created_at       DateTime  @default(now()) @map("createdAt")
+  last_accessed_at DateTime? @map("lastAccessedAt")
   user             User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
@@ -80,7 +80,7 @@ model BlockList {
 model Conversation {
   id                  Int                        @id @default(autoincrement())
   creator             String
-  created_at          DateTime                   @default(now())
+  created_at          DateTime                   @default(now()) @map("createdAt")
   public              Boolean?                   @default(false)
   conversations_users ConversationParticipants[]
   Message             Message[]
@@ -93,10 +93,10 @@ model Message {
   id              Int          @id @default(autoincrement())
   author          String
   content         String
-  attachment_url  String?
-  conversation_id Int
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
+  attachment_url  String?      @map("attachmentUrl")
+  conversation_id Int          @map("conversationId")
+  created_at      DateTime     @default(now()) @map("createdAt")
+  updated_at      DateTime     @updatedAt @map("updatedAt")
   pinned          Boolean      @default(false)
   deleted         Boolean      @default(false)
   conversation    Conversation @relation(fields: [conversation_id], references: [id])
@@ -108,11 +108,11 @@ model Message {
 model ConversationParticipants {
   id              Int          @id @default(autoincrement())
   user            String
-  conversation_id Int
-  joined_at       DateTime     @default(now())
-  left_at         String?
-  limited_access  Boolean?
-  access_since    String?
+  conversation_id Int          @map("conversationId")
+  joined_at       DateTime     @default(now()) @map("joinedAt")
+  left_at         String?      @map("leftAt")
+  limited_access  Boolean?     @map("limitedAccess")
+  access_since    String?      @map("accessSince")
   conversations   Conversation @relation(fields: [conversation_id], references: [id])
 
   @@map("conversations_users")
