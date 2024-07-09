@@ -10,27 +10,50 @@ datasource db {
 }
 
 model User {
-  id                Int           @id @default(autoincrement())
-  uuid              String        @unique
-  username          String        @unique
-  preferredUsername String?       @map("preferred_username")
-  email             String        @unique
+  id                Int             @id @default(autoincrement())
+  uuid              String          @unique
+  username          String          @unique
+  preferredUsername String?         @map("preferred_username")
+  email             String          @unique
   country           String?
   address           String?
-  phoneNumer        String?       @map("phone_number")
-  passwordHash      String        @map("password_hash")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
-  lastActiveAt      DateTime?     @map("last_active_at")
-  status            String        @default("ACTIVE")
-  role              String        @default("USER")
-  blockedList       BlockList[]   @relation("BlockedUser")
-  blockedList2      BlockList[]   @relation("BlockingUser")
-  friendList1       FriendList[]  @relation("FriendListUser1")
-  friendList2       FriendList[]  @relation("FriendListUser2")
+  phoneNumer        String?         @map("phone_number")
+  passwordHash      String          @map("password_hash")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  lastActiveAt      DateTime?       @map("last_active_at")
+  status            String          @default("ACTIVE")
+  role              String          @default("USER")
+  blockedList       BlockList[]     @relation("BlockedUser")
+  blockedList2      BlockList[]     @relation("BlockingUser")
+  friendList1       FriendList[]    @relation("FriendListUser1")
+  friendList2       FriendList[]    @relation("FriendListUser2")
+  senderRelations   UserRelations[] @relation("SenderRelations")
+  receiverRelations UserRelations[] @relation("ReceiverRelations")
   sessions          UserSession[]
 
   @@map("users")
+  @@schema("user_management")
+}
+
+model UserRelations {
+  id           Int          @id @default(autoincrement())
+  sender       String
+  receiver     String
+  type         RelationType
+  createdAt    DateTime     @default(now()) @map("created_at")
+  senderUser   User         @relation("SenderRelations", fields: [sender], references: [uuid], onDelete: Cascade)
+  receiverUser User         @relation("ReceiverRelations", fields: [receiver], references: [uuid], onDelete: Cascade)
+
+  @@map("user_relations")
+  @@schema("user_management")
+}
+
+enum RelationType {
+  PENDING
+  FRIEND
+  BLOCKED
+
   @@schema("user_management")
 }
 
