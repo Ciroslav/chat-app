@@ -83,7 +83,7 @@ model Conversation {
   createdAt           DateTime                   @default(now()) @map("created_at")
   public              Boolean?                   @default(false)
   conversations_users ConversationParticipants[]
-  Message             Message[]
+  message             Message[]
 
   @@map("conversations")
   @@schema("messages")

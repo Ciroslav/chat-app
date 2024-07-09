@@ -103,6 +103,7 @@ export class AuthService {
   async refreshAccessToken(userId: string, refreshToken: string): Promise<Tokens> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
+    console.log(session);
     if (!session || session.user_id !== userId) {
       throw new ForbiddenException(); // Invalid session or session not associated with the user
     }
