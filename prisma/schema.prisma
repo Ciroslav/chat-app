@@ -10,41 +10,41 @@ datasource db {
 }
 
 model User {
-  id                 Int           @id @default(autoincrement())
-  uuid               String        @unique
-  username           String        @unique
-  preferred_username String?       @map("preferredUsername")
-  email              String        @unique
-  country            String?
-  address            String?
-  phone_number       String?       @map("phoneNumer")
-  password_hash      String        @map("passwordHash")
-  created_at         DateTime      @default(now()) @map("createdAt")
-  updated_at         DateTime      @updatedAt @map("updatedAt")
-  last_active_at     DateTime?     @map("lastActiveAt")
-  status             String        @default("ACTIVE")
-  role               String        @default("USER")
-  blockedList        BlockList[]   @relation("BlockedUser")
-  blockedList2       BlockList[]   @relation("BlockingUser")
-  friendList1        FriendList[]  @relation("FriendListUser1")
-  friendList2        FriendList[]  @relation("FriendListUser2")
-  sessions           UserSession[]
+  id                Int           @id @default(autoincrement())
+  uuid              String        @unique
+  username          String        @unique
+  preferredUsername String?       @map("preferred_username")
+  email             String        @unique
+  country           String?
+  address           String?
+  phoneNumer        String?       @map("phone_number")
+  passwordHash      String        @map("password_hash")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+  lastActiveAt      DateTime?     @map("last_active_at")
+  status            String        @default("ACTIVE")
+  role              String        @default("USER")
+  blockedList       BlockList[]   @relation("BlockedUser")
+  blockedList2      BlockList[]   @relation("BlockingUser")
+  friendList1       FriendList[]  @relation("FriendListUser1")
+  friendList2       FriendList[]  @relation("FriendListUser2")
+  sessions          UserSession[]
 
   @@map("users")
   @@schema("user_management")
 }
 
 model UserSession {
-  id               Int       @id @default(autoincrement())
-  user_id          String
-  issued_at        DateTime  @map("issuedAt")
-  expires_at       DateTime  @map("expiresAt")
-  login_ip_address String?   @map("loginIpAddress")
-  rt_hash          String?   @map("rtHash")
-  role             String
-  created_at       DateTime  @default(now()) @map("createdAt")
-  last_accessed_at DateTime? @map("lastAccessedAt")
-  user             User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
+  id             Int       @id @default(autoincrement())
+  user_id        String
+  issuedAt       DateTime  @map("issued_at")
+  expiresAt      DateTime  @map("expires_at")
+  loginIpAddress String?   @map("login_ip_address")
+  rtHash         String?   @map("rt_hash")
+  role           String
+  createdAt      DateTime  @default(now()) @map("created_at")
+  lastAccessedAt DateTime? @map("last_accessed_at")
+  user           User      @relation(fields: [user_id], references: [uuid], onDelete: Cascade)
 
   @@map("sessions")
   @@schema("user_management")
@@ -80,7 +80,7 @@ model BlockList {
 model Conversation {
   id                  Int                        @id @default(autoincrement())
   creator             String
-  created_at          DateTime                   @default(now()) @map("createdAt")
+  createdAt           DateTime                   @default(now()) @map("created_at")
   public              Boolean?                   @default(false)
   conversations_users ConversationParticipants[]
   Message             Message[]
@@ -90,30 +90,30 @@ model Conversation {
 }
 
 model Message {
-  id              Int          @id @default(autoincrement())
-  author          String
-  content         String
-  attachment_url  String?      @map("attachmentUrl")
-  conversation_id Int          @map("conversationId")
-  created_at      DateTime     @default(now()) @map("createdAt")
-  updated_at      DateTime     @updatedAt @map("updatedAt")
-  pinned          Boolean      @default(false)
-  deleted         Boolean      @default(false)
-  conversation    Conversation @relation(fields: [conversation_id], references: [id])
+  id             Int          @id @default(autoincrement())
+  author         String
+  content        String
+  attachmentUrl  String?      @map("attachment_url")
+  conversationId Int          @map("conversation_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  pinned         Boolean      @default(false)
+  deleted        Boolean      @default(false)
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
 
   @@map("message")
   @@schema("messages")
 }
 
 model ConversationParticipants {
-  id              Int          @id @default(autoincrement())
-  user            String
-  conversation_id Int          @map("conversationId")
-  joined_at       DateTime     @default(now()) @map("joinedAt")
-  left_at         String?      @map("leftAt")
-  limited_access  Boolean?     @map("limitedAccess")
-  access_since    String?      @map("accessSince")
-  conversations   Conversation @relation(fields: [conversation_id], references: [id])
+  id             Int          @id @default(autoincrement())
+  user           String
+  conversationId Int          @map("conversation_id")
+  joinedAt       DateTime     @default(now()) @map("joined_at")
+  leftAt         String?      @map("left_at")
+  limitedAccess  Boolean?     @map("limited_access")
+  accessSince    String?      @map("access_since")
+  conversations  Conversation @relation(fields: [conversationId], references: [id])
 
   @@map("conversations_users")
   @@schema("messages")
