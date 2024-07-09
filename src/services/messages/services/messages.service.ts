@@ -22,8 +22,8 @@ export class MessagesService {
       data: {
         author: selfUuid,
         content: content,
-        attachment_url: attachmentUrl,
-        conversation_id: conversationId,
+        attachmentUrl: attachmentUrl,
+        conversationId: conversationId,
       },
     });
   }
@@ -32,7 +32,7 @@ export class MessagesService {
     const { content } = updateMessageDto;
     try {
       return await this.prisma.message.update({
-        where: { id: messageId, conversation_id: conversationId },
+        where: { id: messageId, conversationId: conversationId },
         data: {
           author: selfUuid,
           content: content,
@@ -64,9 +64,9 @@ export class MessagesService {
         data: {
           author: selfUuid,
           content: MESSAGE_DELETED,
-          attachment_url: null,
+          attachmentUrl: null,
           deleted: true,
-          conversation_id: conversationId,
+          conversationId: conversationId,
         },
       });
     } catch (error) {
@@ -80,7 +80,7 @@ export class MessagesService {
   async pinMessage(conversationId: number, messageId: number) {
     try {
       await this.prisma.message.update({
-        where: { id: messageId, conversation_id: conversationId },
+        where: { id: messageId, conversationId: conversationId },
         data: {
           pinned: true,
         },
@@ -96,14 +96,14 @@ export class MessagesService {
 
   async findAllPins(conversationId: number) {
     return await this.prisma.message.findMany({
-      where: { pinned: true, conversation_id: conversationId },
+      where: { pinned: true, conversationId: conversationId },
     });
   }
 
   async unpinMessage(conversationId: number, messageId: number) {
     try {
       await this.prisma.message.update({
-        where: { id: messageId, conversation_id: conversationId },
+        where: { id: messageId, conversationId: conversationId },
         data: {
           pinned: false,
         },
@@ -120,7 +120,7 @@ export class MessagesService {
   private async getMessagesBefore(conversationId: number, messageId: number, limit: number) {
     const messages = await this.prisma.message.findMany({
       where: {
-        conversation_id: conversationId,
+        conversationId: conversationId,
         id: {
           lt: messageId,
         },
@@ -151,7 +151,7 @@ export class MessagesService {
 
     const beforeMessages = await this.prisma.message.findMany({
       where: {
-        conversation_id: conversationId,
+        conversationId: conversationId,
         id: {
           lt: messageId,
         },
@@ -164,7 +164,7 @@ export class MessagesService {
 
     const afterMessages = await this.prisma.message.findMany({
       where: {
-        conversation_id: conversationId,
+        conversationId: conversationId,
         id: {
           gt: messageId,
         },
@@ -180,7 +180,7 @@ export class MessagesService {
   private async getLastMessages(conversationId: number, limit: number) {
     const messages = await this.prisma.message.findMany({
       where: {
-        conversation_id: conversationId,
+        conversationId: conversationId,
       },
       orderBy: {
         id: 'desc',

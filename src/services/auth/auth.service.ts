@@ -1,5 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { LoginDto } from './dto';
 import { compare } from 'bcrypt';
 import { createHash } from 'crypto';
@@ -9,15 +8,18 @@ import { ServiceLogger } from 'src/common/logger';
 import { ServiceName } from 'src/common/decorators';
 import { ConfigService } from '@nestjs/config';
 import { ACCESS_TOKEN_LIFETIME, REFRESH_TOKEN_LIFETIME } from 'src/contants';
+import { AUTH_REPOSITORY } from './constants';
+import { AuthRepository } from './auth.repository';
 
 @ServiceName('Auth Service')
 @Injectable()
 export class AuthService {
   private jwtSecrets: JwtSecrets;
   constructor(
+    @Inject(AUTH_REPOSITORY)
+    private readonly authRepository: AuthRepository,
     private readonly configService: ConfigService,
     private readonly logger: ServiceLogger,
-    private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {
     this.jwtSecrets = {
@@ -28,22 +30,13 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto, loginIp: string): Promise<Tokens> {
-    let user = null;
-    if (loginDto.email) {
-      user = await this.prisma.user.findUnique({
-        where: {
-          email: loginDto.email,
-        },
-      });
-    } else {
-      user = await this.prisma.user.findUnique({
-        where: {
-          username: loginDto.username,
-        },
-      });
-    }
+    const { email, username, password } = loginDto;
+    const user = email
+      ? await this.authRepository.getUserByEmail(email)
+      : await this.authRepository.getUserByUsername(username);
+
     if (!user) throw new ForbiddenException('Incorrect credentials.');
-    const passwordMatches = await compare(loginDto.password, user.password_hash);
+    const passwordMatches = await compare(password, user.passwordHash);
     if (!passwordMatches) {
       this.logger.log(`Failed login attempt for user with uuid: '${user.uuid}. Ip address: ${loginIp}`);
       throw new ForbiddenException('Incorrect credentials.');
@@ -60,41 +53,23 @@ export class AuthService {
 
   async logoutOne(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
-
-    const data = await this.prisma.userSession.updateMany({
-      where: {
-        user_id: userId,
-        rt_hash: rtHash,
-      },
-      data: {
-        rt_hash: null,
-      },
-    });
-    if (data.count === 0) {
-      return {
-        message: 'Session already invalid.',
-      };
-    }
-    return {
-      message: 'Operation successful',
-    };
+    const data = await this.authRepository.logout(userId, rtHash);
+    return !data.count
+      ? {
+          message: 'Session already invalid.',
+        }
+      : {
+          message: 'Operation successful',
+        };
   }
   async logoutAll(userId: string, refreshToken: string): Promise<{ message: string }> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
-    if (!session || session.user_id !== userId) {
+    if (!session || session.userId !== userId) {
       throw new ForbiddenException(); // Invalid session or session not associated with the user
     }
 
-    const data = await this.prisma.userSession.updateMany({
-      where: {
-        user_id: userId,
-        rt_hash: { not: null },
-      },
-      data: {
-        rt_hash: null,
-      },
-    });
+    const data = await this.authRepository.logoutAll(userId);
     this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
     return { message: `Number of sessions invalidated: ${data.count}` };
   }
@@ -103,7 +78,8 @@ export class AuthService {
   async refreshAccessToken(userId: string, refreshToken: string): Promise<Tokens> {
     const rtHash = await this.hashToken(refreshToken);
     const session = await this.findSession(userId, rtHash);
-    if (!session || session.user_id !== userId) {
+    console.log(session);
+    if (!session || session.userId !== userId) {
       throw new ForbiddenException(); // Invalid session or session not associated with the user
     }
 
@@ -113,7 +89,7 @@ export class AuthService {
     const { access_token } = await this.issueTokens(
       userId,
       session.user.username,
-      session.user.preferred_username,
+      session.user.preferredUsername,
       session.user.email,
       session.user.role,
     );
@@ -176,44 +152,14 @@ export class AuthService {
     const issuedAt = this.convertTimestampToDate(decodedToken.iat);
     const expiresAt = this.convertTimestampToDate(decodedToken.exp);
     const rtHash = await this.hashToken(refreshToken);
-    await this.prisma.userSession.create({
-      data: {
-        user_id: userId,
-        rt_hash: rtHash,
-        issued_at: issuedAt,
-        expires_at: expiresAt,
-        login_ip_address: loginIp,
-        last_accessed_at: new Date(),
-        role: role,
-      },
-    });
+    await this.authRepository.createSession(userId, rtHash, issuedAt, expiresAt, loginIp, role);
   }
   private async updateSessionLastAccessed(sessionId: number): Promise<void> {
-    await this.prisma.userSession.update({
-      where: { id: sessionId },
-      data: {
-        last_accessed_at: new Date(),
-      },
-    });
-  }
-
-  private async deleteSession(sessionId: number): Promise<void> {
-    await this.prisma.userSession.delete({
-      where: { id: sessionId },
-    });
+    await this.authRepository.updateSessionLastAccessed(sessionId);
   }
 
   private async findSession(userId: string, rtHash: string) {
-    const response = await this.prisma.userSession.findFirst({
-      where: {
-        user_id: userId,
-        rt_hash: rtHash,
-      },
-      include: {
-        user: true,
-      },
-    });
-    console.log(response);
+    const response = await this.authRepository.findSession(userId, rtHash);
     return response;
   }
 

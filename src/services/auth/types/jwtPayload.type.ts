@@ -6,3 +6,12 @@ export type JwtPayload = {
   exp: number;
   refreshToken?: string;
 };
+
+export type JwtWithDates = {
+  uuid: string;
+  preferedUsername: string;
+  email: string;
+  iat: string;
+  exp: string;
+  refreshToken?: string;
+};
