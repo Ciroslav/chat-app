@@ -32,7 +32,7 @@ export class ConversationsService {
   async findAll(selfUUid: string) {
     return await this.prisma.conversationParticipants.findMany({
       where: { user: selfUUid },
-      select: { conversation_id: true },
+      select: { conversationId: true },
     });
   }
 
@@ -41,9 +41,9 @@ export class ConversationsService {
       where: { id: conversationId },
       select: {
         id: true,
-        created_at: true,
+        createdAt: true,
         conversations_users: {
-          select: { user: true, joined_at: true, left_at: true },
+          select: { user: true, joinedAt: true, leftAt: true },
         },
       },
     });
@@ -71,9 +71,9 @@ export class ConversationsService {
 
   async leaveConversation(conversatioId: number, selfUUid: string) {
     const response = await this.prisma.conversationParticipants.updateMany({
-      where: { user: selfUUid, conversation_id: conversatioId, left_at: null },
+      where: { user: selfUUid, conversationId: conversatioId, leftAt: null },
       //TODO FIX THIS
-      data: { left_at: 'SADA' },
+      data: { leftAt: 'SADA' },
     });
     if (response.count === 0) {
       throw new NotFoundException('Conversation not found.');

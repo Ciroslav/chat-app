@@ -64,10 +64,10 @@ export class AuthService {
     const data = await this.prisma.userSession.updateMany({
       where: {
         user_id: userId,
-        rt_hash: rtHash,
+        rtHash: rtHash,
       },
       data: {
-        rt_hash: null,
+        rtHash: null,
       },
     });
     if (data.count === 0) {
@@ -89,10 +89,10 @@ export class AuthService {
     const data = await this.prisma.userSession.updateMany({
       where: {
         user_id: userId,
-        rt_hash: { not: null },
+        rtHash: { not: null },
       },
       data: {
-        rt_hash: null,
+        rtHash: null,
       },
     });
     this.logger.log(`User with uuid '${userId}' invalidated all sessions.`);
@@ -114,7 +114,7 @@ export class AuthService {
     const { access_token } = await this.issueTokens(
       userId,
       session.user.username,
-      session.user.preferred_username,
+      session.user.preferredUsername,
       session.user.email,
       session.user.role,
     );
@@ -180,11 +180,11 @@ export class AuthService {
     await this.prisma.userSession.create({
       data: {
         user_id: userId,
-        rt_hash: rtHash,
-        issued_at: issuedAt,
-        expires_at: expiresAt,
-        login_ip_address: loginIp,
-        last_accessed_at: new Date(),
+        rtHash: rtHash,
+        issuedAt: issuedAt,
+        expiresAt: expiresAt,
+        loginIpAddress: loginIp,
+        lastAccessedAt: new Date(),
         role: role,
       },
     });
@@ -193,7 +193,7 @@ export class AuthService {
     await this.prisma.userSession.update({
       where: { id: sessionId },
       data: {
-        last_accessed_at: new Date(),
+        lastAccessedAt: new Date(),
       },
     });
   }
@@ -208,7 +208,7 @@ export class AuthService {
     const response = await this.prisma.userSession.findFirst({
       where: {
         user_id: userId,
-        rt_hash: rtHash,
+        rtHash: rtHash,
       },
       include: {
         user: true,

@@ -26,7 +26,7 @@ export class ConversationParticipantGuard implements CanActivate {
   }
   private async isChatParticipant(conversationId: number, userId: string) {
     const response = await this.prisma.conversationParticipants.count({
-      where: { conversation_id: conversationId, user: userId },
+      where: { conversationId: conversationId, user: userId },
     });
     return !(response === 0);
   }
