@@ -30,7 +30,6 @@ model User {
   friendList2       FriendList[]    @relation("FriendListUser2")
   senderRelations   UserRelations[] @relation("SenderRelations")
   receiverRelations UserRelations[] @relation("ReceiverRelations")
-  userRelations     UserRelations[]
   sessions          UserSession[]
 
   @@map("users")
@@ -45,8 +44,7 @@ model UserRelations {
   createdAt    DateTime     @default(now()) @map("created_at")
   senderUser   User         @relation("SenderRelations", fields: [sender], references: [uuid], onDelete: Cascade)
   receiverUser User         @relation("ReceiverRelations", fields: [receiver], references: [uuid], onDelete: Cascade)
-  User         User?        @relation(fields: [userId], references: [id])
-  userId       Int?
+
 
   @@map("user_relations")
   @@schema("user_management")
