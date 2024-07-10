@@ -6,6 +6,7 @@ export enum SwaggerTags {
   Authorization = 'Authorization',
   Users = 'Users',
   Relations = 'Relations',
+  RelationsV2 = 'Relations-V2',
   Conversations = 'Conversations',
   Messages = 'Messages',
   Storage = 'Storage',
