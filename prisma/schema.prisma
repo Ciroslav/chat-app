@@ -45,7 +45,7 @@ model UserRelations {
   senderUser   User         @relation("SenderRelations", fields: [sender], references: [uuid], onDelete: Cascade)
   receiverUser User         @relation("ReceiverRelations", fields: [receiver], references: [uuid], onDelete: Cascade)
 
-
+  @@unique([sender, receiver])
   @@map("user_relations")
   @@schema("user_management")
 }
