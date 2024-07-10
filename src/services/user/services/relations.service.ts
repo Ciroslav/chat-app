@@ -1,10 +1,4 @@
-/* eslint-disable prettier/prettier */
-import {
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
@@ -13,18 +7,13 @@ import { GetManyUsersDTO } from '../dto/getUsers.dto';
 @ServiceName('Relations Service')
 @Injectable()
 export class RelationsService {
-  constructor(
-    private readonly logger: ServiceLogger,
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly logger: ServiceLogger, private readonly prisma: PrismaService) {
     this.logger = new ServiceLogger('Relations Service');
   }
 
   async sendFriendRequest(selfUuid: string, targetUuid: string) {
     if (targetUuid === selfUuid) {
-      throw new ConflictException(
-        "Feeling lonely? Can't send friend request to yourself.",
-      );
+      throw new ConflictException("Feeling lonely? Can't send friend request to yourself.");
     }
 
     const user2 = await this.prisma.user.findUnique({
@@ -136,9 +125,7 @@ export class RelationsService {
       },
     });
     if (pendingFriends.length > 0) {
-      const userUuids = pendingFriends.map(
-        (friendship) => friendship.user2_uuid,
-      );
+      const userUuids = pendingFriends.map((friendship) => friendship.user2_uuid);
       const users = await this.prisma.user.findMany({
         where: {
           uuid: {
@@ -173,9 +160,7 @@ export class RelationsService {
       },
     });
     if (pendingFriends.length > 0) {
-      const userUuids = pendingFriends.map(
-        (friendship) => friendship.user1_uuid,
-      );
+      const userUuids = pendingFriends.map((friendship) => friendship.user1_uuid);
       const users = await this.prisma.user.findMany({
         where: {
           uuid: {
@@ -212,9 +197,7 @@ export class RelationsService {
     });
 
     if (relation.count === 0) {
-      throw new NotFoundException(
-        "User not in friends list, or doesn't exist.",
-      );
+      throw new NotFoundException("User not in friends list, or doesn't exist.");
     }
 
     return { message: 'Success.' };
@@ -336,9 +319,7 @@ export class RelationsService {
       take,
     });
 
-    const blockedUserUUIDs = blockedUsers.map(
-      (blocked) => blocked.blocked_uuid,
-    );
+    const blockedUserUUIDs = blockedUsers.map((blocked) => blocked.blocked_uuid);
 
     const users = await this.prisma.user.findMany({
       where: {
@@ -376,9 +357,7 @@ export class RelationsService {
       },
     });
     const friendUuids = friends.flatMap((friend) =>
-      friend.user1_uuid === selfUuid
-        ? [friend.user2_uuid]
-        : [friend.user1_uuid],
+      friend.user1_uuid === selfUuid ? [friend.user2_uuid] : [friend.user1_uuid],
     );
 
     const blocked = await this.prisma.blockList.findMany({
@@ -391,9 +370,7 @@ export class RelationsService {
       },
     });
     const blockedUuids = blocked.flatMap((blocked) =>
-      blocked.user_uuid === selfUuid
-        ? [blocked.blocked_uuid]
-        : [blocked.user_uuid],
+      blocked.user_uuid === selfUuid ? [blocked.blocked_uuid] : [blocked.user_uuid],
     );
 
     const uuidsToFilter = [...friendUuids, ...blockedUuids, selfUuid];
