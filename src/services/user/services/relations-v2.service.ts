@@ -2,7 +2,7 @@ import { ConflictException, Injectable, InternalServerErrorException, NotFoundEx
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ServiceName } from 'src/common/decorators';
 import { ServiceLogger } from 'src/common/logger';
-import { RelationType } from '@prisma/client';
+import { RelationType, User } from '@prisma/client';
 
 @ServiceName('Relations Service V2')
 @Injectable()
@@ -118,17 +118,58 @@ export class RelationsServiceV2 {
   //TODO: parse response remove sensitive data and group
   async getUserRelations(selfUuid: string) {
     try {
-      const response = await this.prisma.userRelations.findMany({
+      const relations = await this.prisma.userRelations.findMany({
         where: {
           OR: [{ sender: selfUuid }, { receiver: selfUuid }],
         },
         include: { senderUser: true, receiverUser: true },
       });
-      console.log(response);
-      return response;
+      console.log(relations);
+      const friends = [];
+      const sentRequests = [];
+      const incomingRequests = [];
+      const blockedByUser = [];
+
+      relations.forEach((relation) => {
+        if (relation.type === RelationType.FRIEND && relation.sender === selfUuid) {
+          friends.push(this.parseUserForPublicUse(relation.receiverUser));
+        }
+        if (relation.type === RelationType.FRIEND && relation.sender !== selfUuid) {
+          friends.push(this.parseUserForPublicUse(relation.senderUser));
+        }
+        if (relation.type === RelationType.PENDING && relation.sender === selfUuid) {
+          sentRequests.push(this.parseUserForPublicUse(relation.receiverUser));
+        }
+        if (relation.type === RelationType.PENDING && relation.sender !== selfUuid) {
+          incomingRequests.push(this.parseUserForPublicUse(relation.senderUser));
+        }
+        if (relation.type === RelationType.BLOCKED && relation.sender === selfUuid) {
+          blockedByUser.push(this.parseUserForPublicUse(relation.receiverUser));
+        }
+      });
+      const parsedRelations = {
+        friends: friends,
+        sentFriendRequests: sentRequests,
+        incomingFriendRequests: incomingRequests,
+        blocked: blockedByUser,
+      };
+      return parsedRelations;
     } catch (error) {
       console.error('Error fetchin relation:', error);
       throw new ConflictException('Error fetching the relation.');
     }
+  }
+  private parseUserForPublicUse(user: User): Partial<User> {
+    return {
+      uuid: user.uuid,
+      username: user.username,
+      preferredUsername: user.preferredUsername,
+      email: user.email,
+      country: user.country,
+      phoneNumer: user.phoneNumer,
+      address: user.address,
+      createdAt: user.createdAt,
+      lastActiveAt: user.lastActiveAt,
+    };
   }
 }
